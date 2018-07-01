@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template for DnsCertificate
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+Resources:
+  CaaRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: {{.HostedZoneName}}
+      Name: {{.DomainName}}
+      ResourceRecords:
+      - "0 issue \"amazon.com\""
+      TTL: 300
+      Type: CAA
+  Certificate:
+    Type: Custom::DnsCertificate
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-DnsCertificateVersion
+      DomainName: {{.DomainName}}
+      Region: us-east-1
+      SubjectAlternativeNames:
+      - .San
+      Tags:
+      - Key: test
+        Value: {{.TagValue}}
+    DependsOn:
+    - CaaRecord
+  DnsRecordDomainName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: {{.HostedZoneName}}
+      Name:
+        Fn::GetAtt: [Certificate, "{{.DomainName}}-RecordName"]
+      ResourceRecords:
+      - Fn::GetAtt: [Certificate, "{{.DomainName}}-RecordValue"]
+      TTL: 300
+      Type: CNAME
+  DnsRecordSAN:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: {{.HostedZoneName}}
+      Name:
+        Fn::GetAtt: [Certificate, "{{.San}}-RecordName"]
+      ResourceRecords:
+      - Fn::GetAtt: [Certificate, "{{.San}}-RecordValue"]
+      TTL: 300
+      Type: CNAME
+Outputs:
+  CertificateArn:
+    Value: !GetAtt Certificate.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-Arn
+  DomainNameRecordName:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.DomainName}}-RecordName"]
+    Export:
+      Name: !Sub ${AWS::StackName}-DomainNameRecordName
+  DomainNameRecordValue:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.DomainName}}-RecordValue"]
+    Export:
+      Name: !Sub ${AWS::StackName}-DomainNameRecordValue
+  SANRecordName:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.San}}-RecordName"]
+    Export:
+      Name: !Sub ${AWS::StackName}-SANRecordName
+  SANRecordValue:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.San}}-RecordValue"]
+    Export:
+      Name: !Sub ${AWS::StackName}-SANRecordValue

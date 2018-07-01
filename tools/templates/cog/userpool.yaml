@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+  CertStack:
+    Type: String
+    Default: Cert
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AutoVerifiedAttributes:
+      - email
+      LambdaConfig:
+        PreSignUp:
+          Fn::ImportValue: !Sub "${HyperdriveCore}-CogCond"
+      UserPoolName:
+        Fn::ImportValue: !Sub "${CertStack}-DomainName"
+      UsernameAttributes:
+      - email
+  CognitoPoolDomain:
+    Type: Custom::CognitoPoolDomain
+    Properties:
+      ServiceToken:
+        Fn::ImportValue: !Sub "${HyperdriveCore}-CognitoDomain"
+      Domain:
+        Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
+      UserPoolId: !Ref CognitoUserPool
+      CustomDomainConfig:
+        CertificateArn:
+          Fn::ImportValue: !Sub "${CertStack}-CertificateArn"
+  CognitoPoolDomainDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt CognitoPoolDomain.CloudFrontDomain
+        HostedZoneId: Z2FDTNDATAQYW2
+      HostedZoneName:
+        Fn::ImportValue: !Sub "${CertStack}-HostedZoneName"
+      Name:
+        Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
+      Type: A
+  GoogleIdentityProvider:
+    Type: Custom::CognitoIdentityProvider
+    Properties:
+      ServiceToken:
+        Fn::ImportValue: !Sub "${HyperdriveCore}-CognitoIdentityProvider"
+      UserPoolId: !Ref CognitoUserPool
+      ProviderName: Google
+      ProviderType: Google
+      ClientIdParameter:
+        Fn::Sub:
+        - "/hyperdrive/cogidp/${Domain}/Google/ClientId"
+        - Domain:
+            Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
+      ClientSecretParameter:
+        Fn::Sub:
+        - "/hyperdrive/cogidp/${Domain}/Google/ClientSecret"
+        - Domain:
+            Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
+      AuthorizeScopes:
+      - profile
+      - email
+      - openid
+      AttributeMapping:
+        email_verified: email_verified
+        name: name
+        email: email
+        username: sub
+Outputs:
+  UserPool:
+    Value: !Ref CognitoUserPool
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPool"

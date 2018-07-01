@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: The S3 Bucket for hyperdrive artefacts
+Parameters:
+  BaseDomainName:
+    Type: String
+  Version:
+    Type: String
+Resources:
+  ArtefactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: "${AWS::Region}.hyperdrive.${BaseDomainName}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  ArtefactsBucketArn:
+    Value: !GetAtt ArtefactsBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtefactsBucketArn"
+  ArtefactsBucketName:
+    Value: !Ref ArtefactsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtefactsBucketName"
+  Version:
+    Value: !Ref Version
+    Export:
+      Name: !Sub "${AWS::StackName}-Version"

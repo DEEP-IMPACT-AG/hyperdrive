@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A trigger function for cognito pools to restrict signin/auth.
+Outputs:
+  FunctionArn:
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-FunctionArn
+    Value:
+      Fn::GetAtt:
+      - Function
+      - Arn
+Parameters:
+  HyperdriveCore:
+    Default: HyperdriveCoreTest
+    Type: String
+Resources:
+  Function:
+    Properties:
+      CodeUri: s3://lambdacfartifacts-artifactbucket-1jt4stxatm74x/lambda/1ca29d7e9dbc56a242bb411fbdcc357a
+      Handler: main
+      Policies:
+      - Statement:
+        - Action:
+          - ssm:DescribeParameters
+          - ssm:GetParametersByPath
+          - ssm:GetParameter
+          - ssm:GetParameters
+          Effect: Allow
+          Resource:
+          - arn:aws:ssm:*:*:parameter/hyperdrive/cogcong/*
+          Sid: ssm
+        Version: '2012-10-17'
+      Runtime: go1.x
+    Type: AWS::Serverless::Function
+  Logs:
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - /aws/lambda/${LambdaName}
+        - LambdaName:
+            Ref: Function
+      RetentionInDays: 90
+    Type: AWS::Logs::LogGroup
+Transform: AWS::Serverless-2016-10-31

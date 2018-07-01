@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+  CertStack:
+    Type: String
+    Default: Cert
+  UserPoolStack:
+    Type: String
+    Default: UserPool
+Resources:
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Fn::ImportValue: !Sub "${UserPoolStack}-UserPool"
+      WriteAttributes:
+      - email
+  CognitoUserPoolClientSettings:
+    Type: Custom::CognitoClientSettings
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-CognitoClientSettings
+      UserPoolId:
+        Fn::ImportValue:
+          !Sub ${UserPoolStack}-UserPool
+      UserPoolClientId: !Ref CognitoUserPoolClient
+      AllowedOAuthFlows:
+      - code
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+      - email
+      - openid
+      CallbackURLs:
+      - Fn::Sub:
+        - "https://${Domain}/auth"
+        - Domain:
+            Fn::ImportValue: !Sub "${CertStack}-DomainName"
+      LogoutURLs:
+      - Fn::Sub:
+        - "https://${Domain}/logout"
+        - Domain:
+            Fn::ImportValue: !Sub "${CertStack}-DomainName"
+      SupportedIdentityProviders:
+      - COGNITO
+      - Google

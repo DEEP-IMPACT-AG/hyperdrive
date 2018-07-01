@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+  HostedZoneName:
+    Type: String
+    Default: <hosted zone name>
+  DomainName:
+    Type: String
+    Default: <domain name>
+  IdentityDomainName:
+    Type: String
+    Default: identity.<domain name>
+  DNSDomainRecordName:
+    Type: String
+    Default: <domain name>-RecordName
+  DNSDomainRecordValue:
+    Type: String
+    Default: <domain name>-RecordValue
+  DNSIdentityDomainRecordName:
+    Type: String
+    Default: identity.<domain name>-RecordName
+  DNSIdentityDomainRecordValue:
+    Type: String
+    Default: identity.<domain name>-RecordValue
+Resources:
+  CaaRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Ref HostedZoneName
+      RecordSets:
+      - Name: !Ref DomainName
+        ResourceRecords:
+        - "0 issue \"amazon.com\""
+        TTL: 300
+        Type: CAA
+      - Name: !Ref IdentityDomainName
+        ResourceRecords:
+        - "0 issue \"amazon.com\""
+        TTL: 300
+        Type: CAA
+  Certificate:
+    Type: "Custom::DnsCertificate"
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-DnsCertificate
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames:
+      - !Ref IdentityDomainName
+      Region: us-east-1
+    DependsOn:
+    - CaaRecords
+  DnsRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Ref HostedZoneName
+      RecordSets:
+      - Name:
+          Fn::GetAtt:
+          - Certificate
+          - !Ref DNSDomainRecordName
+        ResourceRecords:
+        - Fn::GetAtt:
+          - Certificate
+          - !Ref DNSDomainRecordValue
+        TTL: 300
+        Type: CNAME
+      - Name:
+          Fn::GetAtt:
+          - Certificate
+          - !Ref DNSIdentityDomainRecordName
+        ResourceRecords:
+        - Fn::GetAtt:
+          - Certificate
+          - !Ref DNSIdentityDomainRecordValue
+        TTL: 300
+        Type: CNAME
+Outputs:
+  HostedZoneName:
+    Value: !Ref HostedZoneName
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneName"
+  DomainName:
+    Value: !Ref DomainName
+    Export:
+      Name: !Sub "${AWS::StackName}-DomainName"
+  IdentityDomainName:
+    Value: !Ref IdentityDomainName
+    Export:
+      Name: !Sub "${AWS::StackName}-IdentityDomainName"
+  DNSDomainRecordName:
+    Value:
+      Fn::GetAtt:
+      - Certificate
+      - !Ref DNSDomainRecordName
+    Export:
+      Name: !Sub "${AWS::StackName}-DNSDomainRecordName"
+  DNSDomainRecordValue:
+    Value:
+      Fn::GetAtt:
+      - Certificate
+      - !Ref DNSDomainRecordValue
+    Export:
+      Name: !Sub "${AWS::StackName}-DNSDomainRecordValue"
+  DNSIdentityDomainRecordName:
+    Value:
+      Fn::GetAtt:
+      - Certificate
+      - !Ref DNSIdentityDomainRecordName
+    Export:
+      Name: !Sub "${AWS::StackName}-DNSIdentityDomainRecordName"
+  DNSIdentityDomainRecordValue:
+    Value:
+      Fn::GetAtt:
+      - Certificate
+      - !Ref DNSIdentityDomainRecordValue
+    Export:
+      Name: !Sub "${AWS::StackName}-DNSIdentityDomainRecordValue"
+  CertificateArn:
+    Value: !Ref Certificate
+    Export:
+      Name: !Sub "${AWS::StackName}-CertificateArn"

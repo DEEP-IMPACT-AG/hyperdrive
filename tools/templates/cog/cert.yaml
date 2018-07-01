@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+  HyperdriveArtefacts:
+    Type: String
+    Default: HyperdriveArtefacts
+  TemplateKey:
+    Type: String
+    Default: "certtest/cert.yml"
+  HostedZoneName:
+    Type: String
+  DomainName:
+    Type: String
+Resources:
+  CertTemplate:
+    Type: Custom::S3Template
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-S3Template
+      S3Bucket:
+        Fn::ImportValue: !Sub "${HyperdriveArtefacts}-ArtefactsBucketName"
+      S3Key: !Ref TemplateKey
+      TemplateBody: |
+        AWSTemplateFormatVersion: "2010-09-09"
+        Parameters:
+          HyperdriveCore:
+            Type: String
+          HostedZoneName:
+            Type: String
+          DomainName:
+            Type: String
+          IdentityDomainName:
+            Type: String
+          DNSDomainRecordName:
+            Type: String
+          DNSDomainRecordValue:
+            Type: String
+          DNSIdentityDomainRecordName:
+            Type: String
+          DNSIdentityDomainRecordValue:
+            Type: String
+        Resources:
+          CaaRecords:
+            Type: AWS::Route53::RecordSetGroup
+            Properties:
+              HostedZoneName: !Ref HostedZoneName
+              RecordSets:
+              - Name: !Ref DomainName
+                ResourceRecords:
+                - "0 issue \"amazon.com\""
+                TTL: 300
+                Type: CAA
+              - Name: !Ref IdentityDomainName
+                ResourceRecords:
+                - "0 issue \"amazon.com\""
+                TTL: 300
+                Type: CAA
+          Certificate:
+            Type: "Custom::DnsCertificate"
+            Properties:
+              ServiceToken:
+                Fn::ImportValue:
+                  !Sub ${HyperdriveCore}-DnsCertificate
+              DomainName: !Ref DomainName
+              SubjectAlternativeNames:
+              - !Ref IdentityDomainName
+              Region: us-east-1
+            DependsOn:
+            - CaaRecords
+          DnsRecords:
+            Type: AWS::Route53::RecordSetGroup
+            Properties:
+              HostedZoneName: !Ref HostedZoneName
+              RecordSets:
+              - Name:
+                  Fn::GetAtt:
+                  - Certificate
+                  - !Ref DNSDomainRecordName
+                ResourceRecords:
+                - Fn::GetAtt:
+                  - Certificate
+                  - !Ref DNSDomainRecordValue
+                TTL: 300
+                Type: CNAME
+              - Name:
+                  Fn::GetAtt:
+                  - Certificate
+                  - !Ref DNSIdentityDomainRecordName
+                ResourceRecords:
+                - Fn::GetAtt:
+                  - Certificate
+                  - !Ref DNSIdentityDomainRecordValue
+                TTL: 300
+                Type: CNAME
+        Outputs:
+          CertificateArn:
+            Value: !Ref Certificate
+            Export:
+              Name: !Sub "${AWS::StackName}-CertificateArn"
+  SubStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref CertTemplate
+      Parameters:
+        HyperdriveCore: !Ref HyperdriveCore
+        HostedZoneName: !Ref HostedZoneName
+        DomainName: !Ref DomainName
+        IdentityDomainName: !Sub "identity.${DomainName}"
+        DNSDomainRecordName: !Sub "${DomainName}-RecordName"
+        DNSDomainRecordValue: !Sub "${DomainName}-RecordValue"
+        DNSIdentityDomainRecordName: !Sub "identity.${DomainName}-RecordName"
+        DNSIdentityDomainRecordValue: !Sub "identity.${DomainName}-RecordValue"
+Outputs:
+  SubStackName:
+    Value: !Ref SubStack
+    Export:
+      Name: !Sub "${AWS::StackName}-SubStack"
+  CertificateArn:
+    Value:
+      Fn::GetAtt:
+      - SubStack
+      - "Outputs.CertificateArn"
+    Export:
+      Name: !Sub "${AWS::StackName}-CertificateArn"
