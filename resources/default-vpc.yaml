@@ -1,0 +1,8 @@
+
+Description: A template to access the default VPC resources as if they were created by a CF template
+
+Outputs:
+  VpcId:
+    Value: {{.VpcId}}
+    Export:
+      Name: !Sub "${AWS::StackName}-VpcId"

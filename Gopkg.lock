@@ -21,6 +21,7 @@
     "private/protocol/query/queryutil",
     "private/protocol/rest",
     "private/protocol/xml/xmlutil",
+    "service/cloudformation",
     "service/sts"
   ]
   revision = "ff1a530c31507c97cf5edbee226e604ca08661cc"
@@ -39,6 +40,12 @@
   version = "v1.11.1"
 
 [[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
+
+[[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   revision = "0b12d6b5"
@@ -52,6 +59,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d000961c085d1fd552bdc583aecb8f3fae2ff19bbebd2692d0d2f7ac8f26ecfe"
+  inputs-digest = "2c5ffb55e2c023d7653c34920e775af51ac71305b6a818c699b393450b01bfe4"
   solver-name = "gps-cdcl"
   solver-version = 1

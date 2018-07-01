@@ -6,12 +6,13 @@ import (
 	"github.com/gobuffalo/packr"
 	"html/template"
 	"os"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 )
 
 func main() {
 	box := packr.NewBox("./resources")
 	cfg, err := external.LoadDefaultAWSConfig(
-		external.WithSharedConfigProfile("stan"),
+		external.WithSharedConfigProfile("???"),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -21,4 +22,6 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	t.Execute(os.Stdout, cfg.Region)
+	cf := cloudformation.New(cfg)
+	MakeDefaultVpcCF(cf)
 }
