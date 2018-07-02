@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"log"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/gobuffalo/packr"
 )
 
 func DefaultVpc(ec2s *ec2.EC2) ec2.Vpc {
@@ -23,6 +24,6 @@ func DefaultVpc(ec2s *ec2.EC2) ec2.Vpc {
 	return res.Vpcs[0];
 }
 
-func MakeDefaultVpcCF(ec2s *ec2.EC2, cfs *cloudformation.CloudFormation) error {
-	return makeDummyCFT(cfs, "DefaultVPC", dummyOutput{Key: "VpcId", Val: *DefaultVpc(ec2s).VpcId})
+func MakeDefaultVpcCF(resources packr.Box, ec2s *ec2.EC2, cfs *cloudformation.CloudFormation) error {
+	return makeDummyCFT(resources, cfs, "DefaultVPC", KeyVal{Key: "VpcId", Val: *DefaultVpc(ec2s).VpcId})
 }

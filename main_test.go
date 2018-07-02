@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 	"fmt"
-	"strings"
+	"encoding/json"
 )
 
 func TestMap(t *testing.T) {
@@ -14,5 +14,6 @@ func TestMap(t *testing.T) {
 		log.Fatal(err)
 	}*/
 
-	fmt.Println(len(strings.Split("oort.ch.", ".")))
+	res, _ := json.Marshal(caaRecord("oort.ch.", AwsIssuer))
+	fmt.Printf("%s", res)
 }
