@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  Name:
+    Type: String
+Resources:
+  DummyName:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref Name
+Outputs:
+  HostedZoneId:
+    Value: !Ref DummyName
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneId"
+  HostedZoneName:
+    Value: !Ref Name
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneName"
+  NameServers:
+    Value:
+      Fn::Join: [",", !GetAtt DummyName.NameServers]
+    Export:
+      Name: !Sub "${AWS::StackName}-NameServers"

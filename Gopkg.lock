@@ -21,9 +21,12 @@
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
+    "private/protocol/restxml",
+    "private/protocol/xml",
     "private/protocol/xml/xmlutil",
     "service/cloudformation",
     "service/ec2",
+    "service/route53",
     "service/sts"
   ]
   revision = "ff1a530c31507c97cf5edbee226e604ca08661cc"
@@ -61,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bfa5204713e0827c7cd6117e82c3294964366fa8058e065794c2edd6ab03ae34"
+  inputs-digest = "f8efb368d7429749aac63971af86b36a21d762d36bb4140075e197d83fe695d2"
   solver-name = "gps-cdcl"
   solver-version = 1

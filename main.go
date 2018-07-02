@@ -7,13 +7,13 @@ import (
 	"html/template"
 	"os"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
 )
 
 func main() {
 	box := packr.NewBox("./resources")
 	cfg, err := external.LoadDefaultAWSConfig(
-		external.WithSharedConfigProfile("???"),
+		external.WithSharedConfigProfile("libra-dev"),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -23,7 +23,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	t.Execute(os.Stdout, cfg.Region)
-	ec2s := ec2.New(cfg)
+	r53s := route53.New(cfg)
 	cfs := cloudformation.New(cfg)
-	MakeDefaultVpcCF(ec2s, cfs)
+	MakeHostedZoneDummy(r53s, cfs, "Z1SEL205AXFHPE")
 }
