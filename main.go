@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
 func main() {
@@ -22,6 +23,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	t.Execute(os.Stdout, cfg.Region)
-	cf := cloudformation.New(cfg)
-	MakeDefaultVpcCF(cf)
+	ec2s := ec2.New(cfg)
+	cfs := cloudformation.New(cfg)
+	MakeDefaultVpcCF(ec2s, cfs)
 }
