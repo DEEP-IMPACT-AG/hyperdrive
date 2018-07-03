@@ -17,3 +17,8 @@ func TestMap(t *testing.T) {
 	res, _ := json.Marshal(caaRecord("oort.ch.", AwsIssuer))
 	fmt.Printf("%s", res)
 }
+
+func TestDic(t *testing.T) {
+	res := findDictionary(Dictionnary, "t")
+	fmt.Printf("%v\n", res)
+}

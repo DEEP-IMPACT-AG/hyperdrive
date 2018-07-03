@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/DEEP-IMPACT-AG/hyperdrive/hview"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"log"
-	"github.com/DEEP-IMPACT-AG/hyperdrive/hview"
 )
 
 func main() {

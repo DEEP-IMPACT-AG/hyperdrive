@@ -320,6 +320,30 @@ func (d *SearchBar) Draw(screen tcell.Screen) {
 	}
 }
 
+var Dictionnary = []string{
+	"tag:",
+	"test",
+	"create ",
+	"action!:",
+	"resource:",
+}
+
+var Default = []string {
+	"tag:",
+	"action!:",
+	"resource:",
+}
+
+func findDictionary(dic []string, prefix string) []string {
+	res := make([]string, 0, 3)
+	for _, el := range dic {
+		if strings.HasPrefix(el, prefix) {
+			res = append(res, el)
+		}
+	}
+	return res
+}
+
 // InputHandler returns the handler for this primitive.
 func (d *SearchBar) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return d.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -327,15 +351,13 @@ func (d *SearchBar) InputHandler() func(event *tcell.EventKey, setFocus func(p t
 		// the current prefix.
 		evalPrefix := func() {
 			if len(d.prefix) > 0 {
-				for index, option := range d.options {
-					if strings.HasPrefix(strings.ToLower(option.Text), d.prefix) {
-						d.list.SetCurrentItem(index)
-						return
-					}
+				search := findDictionary(Dictionnary, d.prefix)
+				d.SetOptions(search, nil)
+				if len(search) > 0 {
+					d.list.SetCurrentItem(0)
 				}
-				// Prefix does not match any item. Remove last rune.
-				r := []rune(d.prefix)
-				d.prefix = string(r[:len(r)-1])
+			} else {
+				d.SetOptions(Default, nil)
 			}
 		}
 
