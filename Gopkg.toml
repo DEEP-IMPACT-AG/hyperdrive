@@ -36,3 +36,11 @@
 [[constraint]]
   name = "github.com/gobuffalo/packr"
   version = "1.11.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/rivo/tview"
+
+[[override]]
+  name = "github.com/gdamore/tcell"
+  revision = "de7e78efa4a71b3f36c7154989c529dbdf9ae623"
