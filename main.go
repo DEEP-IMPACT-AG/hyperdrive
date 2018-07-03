@@ -1,14 +1,38 @@
 package main
 
 import (
-	"github.com/rivo/tview"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
-	"log"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	"github.com/gdamore/tcell"
+	"github.com/rivo/tview"
+	"log"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/hview"
 )
 
 func main() {
+	app := tview.NewApplication()
+	menu := hview.NewDropDown()
+	table := tview.NewTable()
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(populateMenu(menu), 1, 0, true).
+		AddItem(table.SetDoneFunc(func(key tcell.Key) {
+			app.SetFocus(menu)
+		}), 0, 1, false)
+
+	if err := app.SetRoot(flex, true).Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func populateMenu(menu *hview.SearchBar) *hview.SearchBar {
+	return menu.
+		AddOption("tag:", nil).
+		AddOption("action!:", nil).
+		AddOption("resource:", nil)
+}
+
+func main2() {
 	cfg, err := external.LoadDefaultAWSConfig(
 		external.WithSharedConfigProfile("libra-dev"),
 	)
@@ -24,6 +48,7 @@ func main() {
 				pages.AddPage("browser", table, true, false)
 			}
 			pages.SwitchToPage("browser")
+			app.SetFocus(pages)
 		}).
 		AddItem("Create", "Create Resources", 'c', func() {
 			pages.SwitchToPage("create")
@@ -38,6 +63,7 @@ func main() {
 		panic(err)
 	}
 }
+
 func fetchCFS(cfg aws.Config, app *tview.Application) tview.Primitive {
 	table := tview.NewTable()
 	table.
@@ -46,7 +72,7 @@ func fetchCFS(cfg aws.Config, app *tview.Application) tview.Primitive {
 		SetCell(0, 2, headerCell("Status")).
 		SetCell(0, 3, headerCell("Description")).
 		SetFixed(1, 0).
-		SetSelectable(true, false)
+		SetSelectable(true, true)
 	go func() {
 		cfs := cloudformation.New(cfg)
 		request := cloudformation.DescribeStacksInput{}
@@ -63,7 +89,7 @@ func fetchCFS(cfg aws.Config, app *tview.Application) tview.Primitive {
 		}
 		app.Draw()
 	}()
-	return table;
+	return table
 }
 
 func headerCell(text string) *tview.TableCell {
