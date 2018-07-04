@@ -10,7 +10,7 @@ import (
 	"log"
 )
 
-func main() {
+func main2() {
 	app := tview.NewApplication()
 	menu := hview.NewDropDown()
 	table := tview.NewTable()
@@ -32,7 +32,7 @@ func populateMenu(menu *hview.SearchBar) *hview.SearchBar {
 		AddOption("resource:", nil)
 }
 
-func main2() {
+func main() {
 	cfg, err := external.LoadDefaultAWSConfig(
 		external.WithSharedConfigProfile("libra-dev"),
 	)
@@ -41,23 +41,38 @@ func main2() {
 	}
 	app := tview.NewApplication()
 	pages := tview.NewPages()
-	list := tview.NewList().
+	menu := tview.NewList()
+	submenu := tview.NewList().SetDoneFunc(func() {
+		app.SetFocus(menu)
+	})
+	menu.
 		AddItem("Browse", "Browse AWS", 'b', func() {
-			if !pages.HasPage("browser") {
-				table := fetchCFS(cfg, app)
-				pages.AddPage("browser", table, true, false)
-			}
-			pages.SwitchToPage("browser")
-			app.SetFocus(pages)
+			submenu.Clear()
+			submenu.AddItem("Cloudformation", "", 'c',
+				func() {
+					if !pages.HasPage("browser") {
+						table := fetchCFS(cfg, app)
+						pages.AddPage("browser", table, true, true)
+					}
+					pages.SwitchToPage("browser")
+					app.SetFocus(pages)
+				})
+			app.SetFocus(submenu)
 		}).
 		AddItem("Create", "Create Resources", 'c', func() {
-			pages.SwitchToPage("create")
+			submenu.Clear()
+			submenu.AddItem("DefaultVPC", "", 'v', nil)
+			submenu.AddItem("HostedZone", "", 'z', nil)
+			app.SetFocus(submenu)
 		}).
 		AddItem("Quit", "Press to exit", 'q', func() {
 			app.Stop()
 		})
+	menus := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(menu, 0, 1, true).
+		AddItem(submenu, 0, 1, true)
 	flex := tview.NewFlex().
-		AddItem(list, 30, 1, true).
+		AddItem(menus, 30, 1, true).
 		AddItem(pages, 0, 1, false)
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
