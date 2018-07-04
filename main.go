@@ -51,11 +51,7 @@ func main() {
 		submenu.Clear()
 		submenu.AddItem("Cloudformation", "", 'c',
 			func() {
-				if !pages.HasPage("browser") {
-					table := fetchCFS(cfs, app, submenu, pages, details)
-					pages.AddPage("browser", table, true, true)
-				}
-				pages.SwitchToPage("browser")
+				pages.AddAndSwitchToPage("browser", fetchCFS(cfs, app, submenu, pages, details), true)
 				app.SetFocus(pages)
 			})
 		app.SetFocus(submenu)
@@ -110,8 +106,12 @@ func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submen
 				AddCheckbox("Term Protection", *stack.EnableTerminationProtection, nil).
 				AddInputField("Status Reason", display(stack.StackStatusReason), 120, nil, nil).
 				AddInputField("IAM Role", display(stack.RoleARN), 120, nil, nil).
-				AddButton("Switch Term Protection", nil).
-				AddButton("Delete Stack", nil).
+				AddButton("Switch Term Protection", func() {
+				setTerminationProtection(cfs, *stack.StackId, !*stack.EnableTerminationProtection)
+			}).
+				AddButton("Delete Stack", func() {
+				deleteStack(cfs, *stack.StackId)
+			}).
 				SetCancelFunc(func() {
 				app.SetFocus(pages)
 			})
@@ -139,6 +139,25 @@ func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submen
 		app.Draw()
 	}()
 	return table
+}
+
+func setTerminationProtection(cfs *cloudformation.CloudFormation, stackId string, enabled bool) {
+	_, err := cfs.UpdateTerminationProtectionRequest(&cloudformation.UpdateTerminationProtectionInput{
+		StackName: &stackId,
+		EnableTerminationProtection: &enabled,
+	}).Send()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func deleteStack(cfs *cloudformation.CloudFormation, stackId string) {
+	_, err := cfs.DeleteStackRequest(&cloudformation.DeleteStackInput{
+		StackName: &stackId,
+	}).Send()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func display(text *string) string {
