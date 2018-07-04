@@ -66,7 +66,10 @@ func main() {
 			submenu.AddItem("DefaultVPC", "", 'v', func() {
 				vpcCreate(box, ec2s, cfs, app, submenu, pages)
 			})
-			submenu.AddItem("HostedZone", "", 'z', nil)
+			submenu.AddItem("HostedZone", "", 'z', func() {
+				pages.AddAndSwitchToPage("create", newHostedZoned(box, cfs, app, submenu), true)
+				app.SetFocus(pages)
+			})
 			app.SetFocus(submenu)
 		}).
 		AddItem("Quit", "Press to exit", 'q', func() {
@@ -109,6 +112,21 @@ func vpcCreate(box packr.Box, ec2s *ec2.EC2, cfs *cloudformation.CloudFormation,
 		app.SetFocus(pages)
 		app.Draw()
 	}()
+}
+
+func newHostedZoned(box packr.Box, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List) tview.Primitive {
+	form := tview.NewForm().SetCancelFunc(func() {
+		app.SetFocus(submenu)
+	})
+	form.
+		AddInputField("Dns Name", "", 80, nil, nil).
+		AddButton("Create HostedZone", func() {
+			input := form.GetFormItem(0).(*tview.InputField)
+			if err := MakeHostedZone(box, cfs, input.GetText(), AwsIssuer, CertBotIssuer); err != nil {
+				panic(err)
+			}
+		})
+	return form
 }
 
 func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List, pages *tview.Pages, details *tview.Pages) tview.Primitive {
