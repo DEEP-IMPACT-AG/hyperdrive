@@ -52,7 +52,7 @@ func main() {
 		submenu.AddItem("Cloudformation", "", 'c',
 			func() {
 				if !pages.HasPage("browser") {
-					table := fetchCFS(cfs, app, pages, details)
+					table := fetchCFS(cfs, app, submenu, pages, details)
 					pages.AddPage("browser", table, true, true)
 				}
 				pages.SwitchToPage("browser")
@@ -83,7 +83,7 @@ func main() {
 	}
 }
 
-func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, pages *tview.Pages, details *tview.Pages) tview.Primitive {
+func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List, pages *tview.Pages, details *tview.Pages) tview.Primitive {
 	table := tview.NewTable()
 	table.
 		SetCell(0, 0, headerCell("Stack Name")).
@@ -117,6 +117,10 @@ func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, pages 
 			})
 			details.AddAndSwitchToPage("details", form, true)
 			app.SetFocus(details)
+		}
+	}).SetDoneFunc(func(key tcell.Key) {
+		if key != tcell.KeyEnter {
+			app.SetFocus(submenu)
 		}
 	})
 	go func() {
