@@ -2,23 +2,23 @@ package main
 
 import (
 	"testing"
-	"fmt"
-	"encoding/json"
+	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"log"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 )
 
 func TestMap(t *testing.T) {
-	/*cfg, err := external.LoadDefaultAWSConfig(
+	cfg, err := external.LoadDefaultAWSConfig(
 		external.WithSharedConfigProfile("libra-dev"),
 	)
 	if err != nil {
 		log.Fatal(err)
-	}*/
+	}
 
-	res, _ := json.Marshal(caaRecord("oort.ch.", AwsIssuer))
-	fmt.Printf("%s", res)
-}
-
-func TestDic(t *testing.T) {
-	res := findDictionary(Dictionnary, "t")
-	fmt.Printf("%v\n", res)
+	cfs := cloudformation.New(cfg)
+	exist, err := DefaultVpcCFSExist(cfs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	println(exist)
 }

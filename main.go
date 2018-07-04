@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/DEEP-IMPACT-AG/hyperdrive/hview"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/gdamore/tcell"
+	"github.com/gobuffalo/packr"
 	"github.com/rivo/tview"
 	"log"
 )
@@ -16,8 +19,8 @@ func main2() {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(populateMenu(menu), 1, 0, true).
 		AddItem(table.SetDoneFunc(func(key tcell.Key) {
-		app.SetFocus(menu)
-	}), 0, 1, false)
+			app.SetFocus(menu)
+		}), 0, 1, false)
 
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		log.Fatal(err)
@@ -38,7 +41,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	box := packr.NewBox("./resources")
 	cfs := cloudformation.New(cfg)
+	ec2s := ec2.New(cfg)
 	app := tview.NewApplication()
 	pages := tview.NewPages()
 	details := tview.NewPages()
@@ -48,23 +53,25 @@ func main() {
 	})
 	menu.
 		AddItem("Browse", "Browse AWS", 'b', func() {
-		submenu.Clear()
-		submenu.AddItem("Cloudformation", "", 'c',
-			func() {
-				pages.AddAndSwitchToPage("browser", fetchCFS(cfs, app, submenu, pages, details), true)
-				app.SetFocus(pages)
-			})
-		app.SetFocus(submenu)
-	}).
+			submenu.Clear()
+			submenu.AddItem("Cloudformation", "", 'c',
+				func() {
+					pages.AddAndSwitchToPage("browser", fetchCFS(cfs, app, submenu, pages, details), true)
+					app.SetFocus(pages)
+				})
+			app.SetFocus(submenu)
+		}).
 		AddItem("Create", "Create Resources", 'c', func() {
-		submenu.Clear()
-		submenu.AddItem("DefaultVPC", "", 'v', nil)
-		submenu.AddItem("HostedZone", "", 'z', nil)
-		app.SetFocus(submenu)
-	}).
+			submenu.Clear()
+			submenu.AddItem("DefaultVPC", "", 'v', func() {
+				vpcCreate(box, ec2s, cfs, app, submenu, pages)
+			})
+			submenu.AddItem("HostedZone", "", 'z', nil)
+			app.SetFocus(submenu)
+		}).
 		AddItem("Quit", "Press to exit", 'q', func() {
-		app.Stop()
-	})
+			app.Stop()
+		})
 	menus := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(menu, 0, 1, true).
 		AddItem(submenu, 0, 1, true)
@@ -79,6 +86,31 @@ func main() {
 	}
 }
 
+func vpcCreate(box packr.Box, ec2s *ec2.EC2, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List, pages *tview.Pages) {
+	go func() {
+		exist, err := DefaultVpcCFSExist(cfs)
+		if err != nil {
+			panic(err)
+		}
+		if exist {
+			text := tview.NewTextView().SetDoneFunc(func(key tcell.Key) {
+				app.SetFocus(submenu)
+			})
+			fmt.Fprint(text, "Default VPC Exists already.")
+			pages.AddAndSwitchToPage("create", text, true)
+		} else {
+			form := tview.NewForm().
+				AddButton("Create Default VPC Stack.", func() {
+					MakeDefaultVpcCF(box, ec2s, cfs)
+					app.SetFocus(submenu)
+				})
+			pages.AddAndSwitchToPage("create", form, true)
+		}
+		app.SetFocus(pages)
+		app.Draw()
+	}()
+}
+
 func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List, pages *tview.Pages, details *tview.Pages) tview.Primitive {
 	table := tview.NewTable()
 	table.
@@ -89,36 +121,36 @@ func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submen
 		SetFixed(1, 0).
 		SetSelectable(true, true).
 		SetSelectedFunc(func(row, column int) {
-		if row > 0 {
-			stackName := table.GetCell(row, 0).Text
-			request := cloudformation.DescribeStacksInput{
-				StackName: &stackName,
+			if row > 0 {
+				stackName := table.GetCell(row, 0).Text
+				request := cloudformation.DescribeStacksInput{
+					StackName: &stackName,
+				}
+				res, err := cfs.DescribeStacksRequest(&request).Send()
+				if err != nil {
+					panic(err)
+				}
+				stack := res.Stacks[0]
+				form := tview.NewForm().
+					AddInputField("Stack Name", display(stack.StackName), 40, nil, nil).
+					AddInputField("Stack ID", display(stack.StackId), 120, nil, nil).
+					AddInputField("Status", string(stack.StackStatus), 40, nil, nil).
+					AddCheckbox("Term Protection", *stack.EnableTerminationProtection, nil).
+					AddInputField("Status Reason", display(stack.StackStatusReason), 120, nil, nil).
+					AddInputField("IAM Role", display(stack.RoleARN), 120, nil, nil).
+					AddButton("Switch Term Protection", func() {
+						setTerminationProtection(cfs, *stack.StackId, !*stack.EnableTerminationProtection)
+					}).
+					AddButton("Delete Stack", func() {
+						deleteStack(cfs, *stack.StackId)
+					}).
+					SetCancelFunc(func() {
+						app.SetFocus(pages)
+					})
+				details.AddAndSwitchToPage("details", form, true)
+				app.SetFocus(details)
 			}
-			res, err := cfs.DescribeStacksRequest(&request).Send()
-			if err != nil {
-				panic(err)
-			}
-			stack := res.Stacks[0]
-			form := tview.NewForm().
-				AddInputField("Stack Name", display(stack.StackName), 40, nil, nil).
-				AddInputField("Stack ID", display(stack.StackId), 120, nil, nil).
-				AddInputField("Status", string(stack.StackStatus), 40, nil, nil).
-				AddCheckbox("Term Protection", *stack.EnableTerminationProtection, nil).
-				AddInputField("Status Reason", display(stack.StackStatusReason), 120, nil, nil).
-				AddInputField("IAM Role", display(stack.RoleARN), 120, nil, nil).
-				AddButton("Switch Term Protection", func() {
-				setTerminationProtection(cfs, *stack.StackId, !*stack.EnableTerminationProtection)
-			}).
-				AddButton("Delete Stack", func() {
-				deleteStack(cfs, *stack.StackId)
-			}).
-				SetCancelFunc(func() {
-				app.SetFocus(pages)
-			})
-			details.AddAndSwitchToPage("details", form, true)
-			app.SetFocus(details)
-		}
-	}).SetDoneFunc(func(key tcell.Key) {
+		}).SetDoneFunc(func(key tcell.Key) {
 		if key != tcell.KeyEnter {
 			app.SetFocus(submenu)
 		}
@@ -143,7 +175,7 @@ func fetchCFS(cfs *cloudformation.CloudFormation, app *tview.Application, submen
 
 func setTerminationProtection(cfs *cloudformation.CloudFormation, stackId string, enabled bool) {
 	_, err := cfs.UpdateTerminationProtectionRequest(&cloudformation.UpdateTerminationProtectionInput{
-		StackName: &stackId,
+		StackName:                   &stackId,
 		EnableTerminationProtection: &enabled,
 	}).Send()
 	if err != nil {
