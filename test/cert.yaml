@@ -13,10 +13,10 @@ Resources:
       ServiceToken:
         Fn::ImportValue:
           !Sub ${HyperdriveCore}-DnsCertificate
-      DomainName: oort.ch
+      DomainName: first-impact.io
       Region: us-east-1
       SubjectAlternativeNames:
-      - test.oort.ch
+      - test3-hyperdrive.first-impact.io
       Tags:
       - Key: hyperdrive:project
         Value: test
@@ -33,13 +33,13 @@ Resources:
         TTL: "300"
         Type: CNAME
       - Name:
-          Fn::GetAtt: [FirstImpactCert, "test-hyperdrive.first-impact.io-RecordName"]
+          Fn::GetAtt: [FirstImpactCert, "test3-hyperdrive.first-impact.io-RecordName"]
         ResourceRecords:
-        - Fn::GetAtt: [FirstImpactCert, "test-hyperdrive.first-impact.io-RecordValue"]
+        - Fn::GetAtt: [FirstImpactCert, "test3-hyperdrive.first-impact.io-RecordValue"]
         TTL: "300"
         Type: CNAME
-      - Name: "test-hyperdrive.first-impact.io"
+      - Name: "test3-hyperdrive.first-impact.io"
         ResourceRecords:
         - "0 issue \"amazon.com\""
         TTL: "300"
-        Type: CNAME
+        Type: CAA

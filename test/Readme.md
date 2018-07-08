@@ -12,6 +12,25 @@ aws cloudformation create-change-set \
   --change-set-type CREATE \
   --capabilities CAPABILITY_IAM
   
+ aws cloudformation create-change-set \
+   --region eu-central-1 \
+   --profile deepimpact-dev \
+   --stack-name HyperdriveCore \
+   --template-url https://s3.eu-central-1.amazonaws.com/eu-central-1.hyperdrive.sh/cf/hyperdrive/v0.0.0-18-gcb11--DIRTY--/test-hyperdriveCore.yaml \
+   --change-set-name creation-hpd-1 \
+   --change-set-type CREATE \
+   --capabilities CAPABILITY_IAM
+   
+ aws cloudformation create-change-set \
+   --region eu-central-1 \
+   --profile deepimpact-dev \
+   --stack-name HyperdriveCore \
+   --template-url https://s3-eu-west-1.amazonaws.com/eu-west-1.hyperdrive.sh/cf/hyperdrive/v0.0.0-18-gcb11/test-hyperdriveCore.yaml \
+   --change-set-name creation-hpd-2 \
+   --change-set-type CREATE \
+   --capabilities CAPABILITY_IAM
+  
+  
  aws cloudformation execute-change-set \
    --profile deepimpact-dev \
    --change-set-name creation-hpd-1
@@ -23,7 +42,7 @@ To update the hyperdrive:
 aws cloudformation create-change-set \
   --profile deepimpact-dev \
   --stack-name HyperdriveCore \
-  --template-url https://s3-eu-west-1.amazonaws.com/eu-west-1.hyperdrive.sh/cf/hyperdrive/v0.0.0-18-gcb11/test-hyperdriveCore.yaml \
+  --template-url https://s3-eu-west-1.amazonaws.com/eu-west-1.hyperdrive.sh/cf/hyperdrive/v0.0.0-20-gbaa0/test-hyperdriveCore.yaml \
   --change-set-name update-hpd-1 \
   --change-set-type UPDATE \
   --capabilities CAPABILITY_IAM
@@ -33,7 +52,6 @@ aws cloudformation create-change-set \
    --change-set-name update-hpd-1
 ```
 
-
 To test the core, issue the following command:
 
 ```bash
@@ -41,5 +59,5 @@ aws cloudformation deploy \
   --profile deepimpact-dev \
   --stack-name hc-test \
   --template-file cert.yaml \
-  --parameter-override OortHostedZone=HostedZone-oort-ch
+  --parameter-override FirstImpactIoHostedZone=HostedZone-first-impact-io
 ```

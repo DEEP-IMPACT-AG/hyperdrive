@@ -10,6 +10,7 @@ import (
 	"github.com/gobuffalo/packr"
 	"github.com/rivo/tview"
 	"log"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
 )
 
 func main2() {
@@ -44,6 +45,7 @@ func main() {
 	box := packr.NewBox("./resources")
 	cfs := cloudformation.New(cfg)
 	ec2s := ec2.New(cfg)
+	r53s := route53.New(cfg)
 	app := tview.NewApplication()
 	pages := tview.NewPages()
 	details := tview.NewPages()
@@ -67,7 +69,11 @@ func main() {
 				vpcCreate(box, ec2s, cfs, app, submenu, pages)
 			})
 			submenu.AddItem("HostedZone", "", 'z', func() {
-				pages.AddAndSwitchToPage("create", newHostedZoned(box, cfs, app, submenu), true)
+				pages.AddAndSwitchToPage("create", newHostedZone(box, cfs, app, submenu), true)
+				app.SetFocus(pages)
+			})
+			submenu.AddItem("DummyHostedZone", "", 'h', func() {
+				pages.AddAndSwitchToPage("create", newDummyHostedZone(box, r53s, cfs, app, submenu), true)
 				app.SetFocus(pages)
 			})
 			app.SetFocus(submenu)
@@ -114,7 +120,7 @@ func vpcCreate(box packr.Box, ec2s *ec2.EC2, cfs *cloudformation.CloudFormation,
 	}()
 }
 
-func newHostedZoned(box packr.Box, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List) tview.Primitive {
+func newHostedZone(box packr.Box, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List) tview.Primitive {
 	form := tview.NewForm().SetCancelFunc(func() {
 		app.SetFocus(submenu)
 	})
@@ -126,6 +132,21 @@ func newHostedZoned(box packr.Box, cfs *cloudformation.CloudFormation, app *tvie
 				panic(err)
 			}
 		})
+	return form
+}
+
+func newDummyHostedZone(box packr.Box, r53s *route53.Route53, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List) tview.Primitive {
+	form := tview.NewForm().SetCancelFunc(func() {
+		app.SetFocus(submenu)
+	})
+	form.
+		AddInputField("ZoneId", "", 80, nil, nil).
+		AddButton("Create HostedZone", func() {
+		input := form.GetFormItem(0).(*tview.InputField)
+		if err := MakeHostedZoneDummy(box, r53s, cfs, input.GetText()); err != nil {
+			panic(err)
+		}
+	})
 	return form
 }
 
