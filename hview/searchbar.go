@@ -328,7 +328,7 @@ var Dictionnary = []string{
 	"resource:",
 }
 
-var Default = []string {
+var Default = []string{
 	"tag:",
 	"action!:",
 	"resource:",
@@ -426,4 +426,3 @@ func (d *SearchBar) HasFocus() bool {
 	}
 	return d.hasFocus
 }
-

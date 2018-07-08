@@ -1,11 +1,11 @@
 package main
 
 import (
-	"testing"
-	"github.com/aws/aws-sdk-go-v2/aws/external"
-	"log"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"log"
+	"testing"
 )
 
 func TestMap(t *testing.T) {

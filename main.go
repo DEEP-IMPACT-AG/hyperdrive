@@ -6,11 +6,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/gdamore/tcell"
 	"github.com/gobuffalo/packr"
 	"github.com/rivo/tview"
 	"log"
-	"github.com/aws/aws-sdk-go-v2/service/route53"
 )
 
 func main2() {
@@ -65,6 +65,10 @@ func main() {
 		}).
 		AddItem("Create", "Create Resources", 'c', func() {
 			submenu.Clear()
+			submenu.AddItem("HyperdriveCore", "", 'h', func() {
+				pages.AddAndSwitchToPage("create", installHyperdriveCore(app, submenu), true)
+				app.SetFocus(pages)
+			})
 			submenu.AddItem("DefaultVPC", "", 'v', func() {
 				vpcCreate(box, ec2s, cfs, app, submenu, pages)
 			})
@@ -72,7 +76,7 @@ func main() {
 				pages.AddAndSwitchToPage("create", newHostedZone(box, cfs, app, submenu), true)
 				app.SetFocus(pages)
 			})
-			submenu.AddItem("DummyHostedZone", "", 'h', func() {
+			submenu.AddItem("DummyHostedZone", "", 'd', func() {
 				pages.AddAndSwitchToPage("create", newDummyHostedZone(box, r53s, cfs, app, submenu), true)
 				app.SetFocus(pages)
 			})
@@ -93,6 +97,13 @@ func main() {
 	if err := app.SetRoot(flex, true).Run(); err != nil {
 		panic(err)
 	}
+}
+func installHyperdriveCore(app *tview.Application, submenu *tview.List) tview.Primitive {
+	return tview.NewForm().
+		AddButton("Install HyperdriveCore", func() {
+			InstallHyperdrive()
+			app.SetFocus(submenu)
+		})
 }
 
 func vpcCreate(box packr.Box, ec2s *ec2.EC2, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List, pages *tview.Pages) {
@@ -142,11 +153,11 @@ func newDummyHostedZone(box packr.Box, r53s *route53.Route53, cfs *cloudformatio
 	form.
 		AddInputField("ZoneId", "", 80, nil, nil).
 		AddButton("Create HostedZone", func() {
-		input := form.GetFormItem(0).(*tview.InputField)
-		if err := MakeHostedZoneDummy(box, r53s, cfs, input.GetText()); err != nil {
-			panic(err)
-		}
-	})
+			input := form.GetFormItem(0).(*tview.InputField)
+			if err := MakeHostedZoneDummy(box, r53s, cfs, input.GetText()); err != nil {
+				panic(err)
+			}
+		})
 	return form
 }
 

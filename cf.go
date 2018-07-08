@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
-	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"fmt"
-	"time"
-	"log"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/gobuffalo/packr"
+	"github.com/google/uuid"
+	"log"
+	"time"
 )
 
 func dummyResource(resources packr.Box) map[string]interface{} {
@@ -80,14 +80,14 @@ func deployCFT(cfs *cloudformation.CloudFormation, stackName string, template ma
 	if err != nil {
 		return err
 	}
-	in2 := cloudformation.ExecuteChangeSetInput{
-		ChangeSetName: cs.Id,
-	}
-	if err != nil {
-		return err
-	}
+	return executeChangeset(cfs, cs)
+}
+
+func executeChangeset(cfs *cloudformation.CloudFormation, cs *cloudformation.CreateChangeSetOutput) error {
 	waitForChangeSet(cfs, cs)
-	_, err = cfs.ExecuteChangeSetRequest(&in2).Send()
+	_, err := cfs.ExecuteChangeSetRequest(&cloudformation.ExecuteChangeSetInput{
+		ChangeSetName: cs.Id,
+	}).Send()
 	if err != nil {
 		return err
 	}

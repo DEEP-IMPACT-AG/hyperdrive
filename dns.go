@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
-	"strings"
-	"fmt"
 	"github.com/gobuffalo/packr"
-	"encoding/json"
+	"strings"
 )
 
 func MakeHostedZone(resources packr.Box, cfs *cloudformation.CloudFormation, name string, issuers ...string) error {
@@ -16,10 +16,10 @@ func MakeHostedZone(resources packr.Box, cfs *cloudformation.CloudFormation, nam
 		return err
 	}
 	if len(issuers) > 0 {
-		record := caaRecord(issuers...);
+		record := caaRecord(issuers...)
 		resources := cft["Resources"].(map[string]interface{})
 		resources["CaaRootRecord"] = map[string]interface{}{
-			"Type": "AWS::Route53::RecordSet",
+			"Type":       "AWS::Route53::RecordSet",
 			"Properties": record,
 		}
 	}
@@ -27,7 +27,7 @@ func MakeHostedZone(resources packr.Box, cfs *cloudformation.CloudFormation, nam
 }
 
 const (
-	AwsIssuer = "amazon.com"
+	AwsIssuer     = "amazon.com"
 	CertBotIssuer = "letsencrypt.org"
 )
 
@@ -36,12 +36,12 @@ func caaRecord(issuers ...string) map[string]interface{} {
 	for i, el := range issuers {
 		records[i] = caaIssuer(el)
 	}
-	return map[string]interface{} {
-		"Name": map[string]interface{}{"Ref": "HostedZoneName"},
-		"HostedZoneId": map[string]string{"Ref": "HostedZone"},
+	return map[string]interface{}{
+		"Name":            map[string]interface{}{"Ref": "HostedZoneName"},
+		"HostedZoneId":    map[string]string{"Ref": "HostedZone"},
 		"ResourceRecords": records,
-		"TTL": 300,
-		"Type": route53.RRTypeCaa,
+		"TTL":             300,
+		"Type":            route53.RRTypeCaa,
 	}
 }
 

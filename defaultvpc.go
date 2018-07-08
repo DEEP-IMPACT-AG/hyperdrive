@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
-	"log"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/gobuffalo/packr"
+	"log"
 	"strings"
-	"fmt"
 )
 
 var DefaultVPCStackName = "DefaultVPC"
@@ -26,13 +26,13 @@ func DefaultVpc(ec2s *ec2.EC2) ec2.Vpc {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return res.Vpcs[0];
+	return res.Vpcs[0]
 }
 
 func DefaultVpcCFSExist(cfs *cloudformation.CloudFormation) (bool, error) {
 	_, err := cfs.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
 		StackName: &DefaultVPCStackName,
-	}).Send();
+	}).Send()
 	if err != nil {
 		if strings.Contains(err.Error(), notExistsError) {
 			return false, nil
