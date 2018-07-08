@@ -4,21 +4,29 @@ import (
 	"testing"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"log"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 )
 
 func TestMap(t *testing.T) {
 	cfg, err := external.LoadDefaultAWSConfig(
-		external.WithSharedConfigProfile("libra-dev"),
+		external.WithSharedConfigProfile("hyperdrive"),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	cfs := cloudformation.New(cfg)
-	exist, err := DefaultVpcCFSExist(cfs)
+	stackSetName := "hyperdriveS3Buckets"
+	res, err := cfs.ListStackInstancesRequest(&cloudformation.ListStackInstancesInput{
+		StackSetName: &stackSetName,
+	}).Send()
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
-	println(exist)
+	regions := make([]string, len(res.Summaries))
+	for i, sum := range res.Summaries {
+		regions[i] = *sum.Region
+	}
+	fmt.Printf("%v\n", regions)
 }

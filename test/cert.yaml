@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test Hyperdrive certs
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+  FirstImpactIoHostedZone:
+    Type: String
+Resources:
+  FirstImpactCert:
+    Type: Custom::DnsCertificate
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-DnsCertificate
+      DomainName: oort.ch
+      Region: us-east-1
+      SubjectAlternativeNames:
+      - test.oort.ch
+      Tags:
+      - Key: hyperdrive:project
+        Value: test
+  OortCertRecordGroup:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub ${FirstImpactIoHostedZone}-HostedZoneId
+      RecordSets:
+      - Name:
+          Fn::GetAtt: [FirstImpactCert, "first-impact.io-RecordName"]
+        ResourceRecords:
+        - Fn::GetAtt: [FirstImpactCert, "first-impact.io-RecordValue"]
+        TTL: "300"
+        Type: CNAME
+      - Name:
+          Fn::GetAtt: [FirstImpactCert, "test-hyperdrive.first-impact.io-RecordName"]
+        ResourceRecords:
+        - Fn::GetAtt: [FirstImpactCert, "test-hyperdrive.first-impact.io-RecordValue"]
+        TTL: "300"
+        Type: CNAME
+      - Name: "test-hyperdrive.first-impact.io"
+        ResourceRecords:
+        - "0 issue \"amazon.com\""
+        TTL: "300"
+        Type: CNAME

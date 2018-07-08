@@ -2,19 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/aws/aws-sdk-go"
-  packages = [
-    "aws",
-    "aws/awserr",
-    "aws/credentials",
-    "aws/endpoints",
-    "internal/sdkio",
-    "internal/shareddefaults"
-  ]
-  revision = "8f7d1442888a1f96115869cec4af9855018ece98"
-  version = "v1.14.18"
-
-[[projects]]
   name = "github.com/aws/aws-sdk-go-v2"
   packages = [
     "aws",
@@ -31,12 +18,15 @@
     "internal/sdk",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
     "private/protocol/restxml",
     "private/protocol/xml",
     "private/protocol/xml/xmlutil",
+    "service/acm",
     "service/cloudformation",
     "service/ec2",
     "service/route53",
@@ -121,6 +111,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9496ca02f433d904382e360a048f78a4e919476604dd2ebbb6bbc0ed0d6ab06a"
+  inputs-digest = "fe8b9b2c41eab1ab4cb20f30511810b4fef5db95f9896b64f59732ba4c13d437"
   solver-name = "gps-cdcl"
   solver-version = 1

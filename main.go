@@ -36,7 +36,7 @@ func populateMenu(menu *hview.SearchBar) *hview.SearchBar {
 
 func main() {
 	cfg, err := external.LoadDefaultAWSConfig(
-		external.WithSharedConfigProfile("libra-dev"),
+		external.WithSharedConfigProfile("deepimpact-dev"),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
