@@ -10,11 +10,22 @@ import (
 	"time"
 )
 
-func dummyResource(resources packr.Box) map[string]interface{} {
+func resource(resources packr.Box, name string) map[string]interface{} {
 	var result map[string]interface{}
-	dum := resources.Bytes("dummy-resource.json")
-	json.Unmarshal(dum, &result)
+	dum := resources.Bytes(name)
+	err := json.Unmarshal(dum, &result)
+	if err != nil {
+		panic(err)
+	}
 	return result
+}
+
+func dummyResource(resources packr.Box) map[string]interface{} {
+	return resource(resources, "dummy-resource.json")
+}
+
+func hyperdriveTemplate(resources packr.Box) map[string]interface{} {
+	return resource(resources, "hyperdrive-template.json")
 }
 
 type KeyVal = struct {
@@ -22,12 +33,14 @@ type KeyVal = struct {
 }
 
 func makeDummyCFT(resources packr.Box, cfs *cloudformation.CloudFormation, stackName string, outs ...KeyVal) error {
-	cft := dummyCFT(resources, outs...)
-	deployCFT(cfs, stackName, cft)
-	return nil
+	cft, err := dummyCFT(resources, outs...)
+	if err != nil {
+		return err
+	}
+	return deployCFT(cfs, stackName, cft)
 }
 
-func dummyCFT(resources packr.Box, outs ...KeyVal) map[string]interface{} {
+func dummyCFT(resources packr.Box, outs ...KeyVal) (map[string]interface{}, error) {
 	cft := dummyResource(resources)
 	cft["Description"] = "A template to access the default VPC resources as if they were created by a CF template"
 	out := make(map[string]interface{}, len(outs))
@@ -35,7 +48,7 @@ func dummyCFT(resources packr.Box, outs ...KeyVal) map[string]interface{} {
 		accOutput(out, el.Key, el.Val)
 	}
 	cft["Outputs"] = out
-	return cft
+	return cft, nil
 }
 
 func accOutput(m map[string]interface{}, key, val string) {

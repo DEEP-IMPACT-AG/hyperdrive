@@ -1,0 +1,10 @@
+{
+  "Type": "Custom::DnsCertificate",
+  "Properties": {
+    "ServiceToken": {
+      "Fn::ImportValue": {
+        "Fn::Sub": "${HyperdriveCore}-DnsCertificate"
+      }
+    }
+  }
+}

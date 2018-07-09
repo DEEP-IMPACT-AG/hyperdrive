@@ -1,0 +1,11 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "HyperdriveCore": {
+      "Type": "String",
+      "Default": "HyperdriveCore"
+    }
+  },
+  "Resources": {
+  }
+}

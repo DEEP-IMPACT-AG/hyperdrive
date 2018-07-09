@@ -80,6 +80,10 @@ func main() {
 				pages.AddAndSwitchToPage("create", newDummyHostedZone(box, r53s, cfs, app, submenu), true)
 				app.SetFocus(pages)
 			})
+			submenu.AddItem("SSL Certificate (DNS Based)", "", 's', func() {
+				pages.AddAndSwitchToPage("create", newSSLCertificate(box, cfs, app, submenu), true)
+				app.SetFocus(pages)
+			})
 			app.SetFocus(submenu)
 		}).
 		AddItem("Quit", "Press to exit", 'q', func() {
@@ -98,6 +102,23 @@ func main() {
 		panic(err)
 	}
 }
+func newSSLCertificate(box packr.Box, cfs *cloudformation.CloudFormation, app *tview.Application, submenu *tview.List) tview.Primitive {
+	form := tview.NewForm().SetCancelFunc(func() {
+		app.SetFocus(submenu)
+	})
+	form.
+		AddInputField("RootDomain", "", 80, nil, nil).
+		AddInputField("SubDomain", "", 80, nil, nil).
+		AddButton("Create SSL Certificate", func() {
+		rootDomain := form.GetFormItem(0).(*tview.InputField)
+		subDomain := form.GetFormItem(1).(*tview.InputField)
+		if err := MakeSSLCertificate(box, cfs, rootDomain.GetText(), subDomain.GetText()); err != nil {
+			panic(err)
+		}
+	})
+	return form
+}
+
 func installHyperdriveCore(app *tview.Application, submenu *tview.List) tview.Primitive {
 	return tview.NewForm().
 		AddButton("Install HyperdriveCore", func() {
