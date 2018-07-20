@@ -35,6 +35,7 @@ func sslCertificateTemplate(resources packr.Box, rootDomain, subDomain string) m
 	res["Certificate"] = certificateResource(resources, domain)
 	res["RecordSetGroup"] = recordSetGroup(resources, hostedZoneStackName, domain)
 	ht["Resources"] = res
+	ht["Outputs"] = resource(resources, "dns-certificate-outputs.json")
 	return ht
 }
 
@@ -42,6 +43,7 @@ func certificateResource(resources packr.Box, domain string) interface{} {
 	res := resource(resources, "dns-certificate-resource.json")
 	p := res["Properties"].(map[string]interface{})
 	p["DomainName"] = domain
+	p["Region"] = "us-east-1"
 	return res
 }
 

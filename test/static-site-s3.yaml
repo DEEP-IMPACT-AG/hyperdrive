@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test Hyperdrive static site
+Parameters:
+  DomainName:
+    Type: String
+Resources:
+  StaticSiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DomainName
+      Tags:
+      - Key: hyperdrive:project
+        Value: test
+Outputs:
+  Bucket:
+    Value: !GetAtt StaticSiteS3Bucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-Bucket"

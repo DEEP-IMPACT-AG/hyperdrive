@@ -43,3 +43,8 @@ Resources:
         - "0 issue \"amazon.com\""
         TTL: "300"
         Type: CAA
+Outputs:
+  FirstImpactCert:
+    Value: !GetAtt FirstImpactCert.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-FirstImpactCert

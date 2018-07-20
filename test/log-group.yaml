@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: test for logs
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+Resources:
+  LogGroupEuWest1:
+    Type: Custom::DnsCertificate
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-LogGroup
+      Region: eu-west-1
+      LogGroupName: /stan/test
+      RetentionInDays: 90
+  LogGroupEuCentral1:
+    Type: Custom::DnsCertificate
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-LogGroup
+      Region: eu-central-1
+      LogGroupName: /stan/eu-west-1.test
+      RetentionInDays: 90
+Outputs:
+  LogGroupEuWest1:
+    Value: !GetAtt LogGroupEuWest1.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-LogGroupEuWest1
+  LogGroupEuCentral1:
+    Value: !GetAtt LogGroupEuCentral1.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-LogGroupEuCentral1

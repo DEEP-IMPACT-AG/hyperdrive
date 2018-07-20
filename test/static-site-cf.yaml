@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test Hyperdrive static site
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+  HostedZone:
+    Type: String
+    Default: HostedZone-first-impact-io
+  SSLCertificate:
+    Type: String
+    Default: SSLCert-test3-hyperdrive-first-impact-io
+  DomainName:
+    Type: String
+    Default: test3-hyperdrive.first-impact.io
+  RewriteLambdaFunctionArn:
+    Type: String
+    Default: "arn:aws:lambda:us-east-1:851324330321:function:CfFolderRewrite-CfRewriteFunction-14LJSZ84ZCJRE:1"
+Resources:
+  StaticSiteCloudfrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+        - !Ref DomainName
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          Compress: true
+          DefaultTTL: 300
+          ForwardedValues:
+            Cookies:
+              Forward: none
+            QueryString: false
+          LambdaFunctionAssociations:
+          - EventType: origin-request
+            LambdaFunctionARN: !Ref RewriteLambdaFunctionArn
+          TargetOriginId: staticsite
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        HttpVersion: http2
+        Origins:
+        - DomainName: !Sub ${DomainName}.s3.amazonaws.com
+          Id: staticsite
+          OriginPath: /latest
+          S3OriginConfig: {}
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn:
+            Fn::ImportValue: !Sub ${SSLCertificate}-Arn
+          SslSupportMethod: sni-only
+  StaticSiteRecordSetGroup:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Sub ${HostedZone}-HostedZoneId
+      RecordSets:
+      - Name: !Ref DomainName
+        Type: A
+        AliasTarget:
+          DNSName: !GetAtt StaticSiteCloudfrontDistribution.DomainName
+          HostedZoneId: Z2FDTNDATAQYW2
+Outputs:
+  StaticSite:
+    Value: !Ref StaticSiteCloudfrontDistribution
+    Export:
+      Name: !Sub ${AWS::StackName}-StaticSite

@@ -1,0 +1,15 @@
+{
+  "CertificateArn": {
+    "Value": {
+      "Fn::GetAtt": [
+        "Certificate",
+        "Arn"
+      ]
+    },
+    "Export": {
+      "Name": {
+        "Fn::Sub": "${AWS::StackName}-CertificateArn"
+      }
+    }
+  }
+}
