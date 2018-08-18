@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Test Hyperdrive installation
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCoreTest
+Resources:
+  Certificate:
+    Type: Custom::DnsCertificate
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-DnsCertificate
+      DomainName: {{.DomainName}}
+      {{.RegionProperty}}
+      SubjectAlternativeNames:
+      - {{.San}}
+      Tags:
+      - Key: test
+        Value: {{.TagValue}}
+Outputs:
+  CertificateArn:
+    Value: !GetAtt Certificate.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-Arn
+  DomainNameRecordName:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.DomainName}}-RecordName"]
+    Export:
+      Name: !Sub ${AWS::StackName}-DomainNameRecordName
+  DomainNameRecordValue:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.DomainName}}-RecordValue"]
+    Export:
+      Name: !Sub ${AWS::StackName}-DomainNameRecordValue
+  SANRecordName:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.San}}-RecordName"]
+    Export:
+      Name: !Sub ${AWS::StackName}-SANRecordName
+  SANRecordValue:
+    Value:
+      Fn::GetAtt: [Certificate, "{{.San}}-RecordValue"]
+    Export:
+      Name: !Sub ${AWS::StackName}-SANRecordValue

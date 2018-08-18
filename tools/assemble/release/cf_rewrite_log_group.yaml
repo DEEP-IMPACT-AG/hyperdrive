@@ -1,0 +1,13 @@
+Type: Custom::LogGroup
+Properties:
+  ServiceToken:
+    Fn::ImportValue:
+      Fn::Sub: ${HyperdriveCore}-LogGroup
+  Region: {{.Region}}
+  LogGroupName:
+    Fn::Sub:
+    - "/aws/lambda/{{.Infix}}${LambdaName}"
+    - LambdaName:
+        Ref: CfRewriteFunction
+  RetentionInDays: 90
+DependsOn: CfRewriteFunctionVersion1
