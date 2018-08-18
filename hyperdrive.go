@@ -7,7 +7,7 @@ import (
 	"math/rand"
 )
 
-const hyperdriveCoreVersion = "v0.0.0-20-gbaa0"
+const hyperdriveCoreVersion = "v0.0.0-52-g1c0b"
 
 func InstallHyperdrive() {
 	stackName := "HyperdriveCore"
