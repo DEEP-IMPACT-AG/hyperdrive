@@ -11,9 +11,8 @@ const hyperdriveCoreVersion = "v0.0.0-52-g1c0b"
 
 func InstallHyperdrive() {
 	stackName := "HyperdriveCore"
-	for _, region := range []string{"eu-west-1", "eu-central-1"} {
+	for _, region := range []string{"eu-central-1"} {
 		cfg, err := external.LoadDefaultAWSConfig(
-			external.WithSharedConfigProfile("deepimpact-dev"),
 			external.WithRegion(region),
 		)
 		if err != nil {
@@ -23,7 +22,7 @@ func InstallHyperdrive() {
 		csn := fmt.Sprintf("hyperdrive-%d", rand.Int())
 		key := "hyperdrive-origin"
 		value := "hyperdrive-core"
-		template := fmt.Sprintf("https://s3-%[1]s.amazonaws.com/%[1]s.hyperdrive.sh/cf/hyperdrive/%[2]s/test-hyperdriveCore.yaml", region, hyperdriveCoreVersion)
+		template := fmt.Sprintf("https://s3-%[1]s.amazonaws.com/%[1]s.hyperdrive.sh/cf/hyperdrive/%[2]s/hyperdriveCore.yaml", region, hyperdriveCoreVersion)
 		cs, err := cfs.CreateChangeSetRequest(&cloudformation.CreateChangeSetInput{
 			Capabilities:  []cloudformation.Capability{cloudformation.CapabilityCapabilityIam},
 			ChangeSetName: &csn,
