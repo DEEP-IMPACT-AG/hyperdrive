@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/DEEP-IMPACT-AG/hyperdrive/hview"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/cli/hview"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
