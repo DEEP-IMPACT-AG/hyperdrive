@@ -9,7 +9,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/DEEP-IMPACT-AG/hyperdrive/make/build"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/tools/assemble/build"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -324,19 +324,4 @@ func cfRewriteLogGroupName(region string) string {
 		b.WriteString(strings.Title(el))
 	}
 	return b.String()
-}
-
-func TestRelease() error {
-	version, err := HyperdriveVersion()
-	if err != nil {
-		return err
-	}
-	log.Println("version:", version)
-	zipFunctions()
-	for _, region := range []string{"eu-west-1", "us-east-1"} {
-		if err := releaseRegion(region, version, true); err != nil {
-			return errors.Wrapf(err, "could not test release %s", region)
-		}
-	}
-	return releaseCfRewrite(version, true)
 }
