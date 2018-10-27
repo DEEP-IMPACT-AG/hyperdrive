@@ -1,7 +1,0 @@
-{
-  "Type": "AWS::Route53::RecordSetGroup",
-  "Properties": {
-    "HostedZoneId": null,
-    "RecordSets": null
-  }
-}

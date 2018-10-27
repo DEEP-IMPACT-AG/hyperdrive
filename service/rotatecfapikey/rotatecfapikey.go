@@ -18,7 +18,7 @@
 //      - Fn::ImportValue:
 //          !Sub ${HyperdriveCore}-CfApiKeyRotateCfApiKeyLambdaArn
 // ```
-package rotatecfapikey
+package main
 
 import (
 	"context"

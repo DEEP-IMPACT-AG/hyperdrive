@@ -1,0 +1,41 @@
+# .goreleaser.yml
+project_name: hyperdrive
+
+before:
+  hooks:
+  - go mod download
+
+builds:
+- main: cf/cfapikey/cfapikey.go
+  binary: cfapikey
+  goos:
+  - linux
+  goarch:
+  - amd64
+- main: cf/cogclientset/cogclientset.go
+  binary: cogclientset
+  goos:
+  - linux
+  goarch:
+  - amd64
+- main: cf/dnscert/dnscert.go
+  binary: dnscert
+  goos:
+  - linux
+  goarch:
+  - amd64
+- main: cf/loggrp/loggrp.go
+  binary: loggrp
+  goos:
+  - linux
+  goarch:
+  - amd64
+- main: service/rotatecfapikey/rotatecfapikey.go
+  binary: rotatecfapikey
+  goos:
+  - linux
+  goarch:
+  - amd64
+
+release:
+  disable: true

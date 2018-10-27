@@ -32,7 +32,7 @@
 // > _Required: Yes
 // >
 // > _Update Requires_: Replacement
-package cfapikey
+package main
 
 import (
 	"context"

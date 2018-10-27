@@ -1,6 +1,0 @@
-{
-  "Name": null,
-  "ResourceRecords": ["0 issue \"amazon.com\""],
-  "TTL": "300",
-  "Type": "CAA"
-}

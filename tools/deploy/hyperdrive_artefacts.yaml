@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: The S3 Bucket(s) for stored hyperdrive resources
+Parameters:
+  BaseDomainName:
+    Type: String
+Resources:
+  ArtefactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: "${AWS::Region}.hyperdrive.${BaseDomainName}"
+      VersioningConfiguration:
+        Status: Enabled
+Outputs:
+  ArtefactsBucketArn:
+    Value: !GetAtt ArtefactsBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtefactsBucketArn"
+  ArtificatsBucketName:
+    Value: !Ref ArtefactsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtefactsBucketName"
