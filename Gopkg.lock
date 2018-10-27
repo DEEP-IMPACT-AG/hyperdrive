@@ -24,7 +24,7 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:fc5342a130eea01e4af2e50b844e36cc454fdb8a4a202efded341dc62d4f49cc"
+  digest = "1:4fbf1de072c2ae21064837f7629fd1db08f79829076d06ba6600a2250f3148b5"
   name = "github.com/aws/aws-sdk-go-v2"
   packages = [
     "aws",
@@ -41,16 +41,20 @@
     "internal/sdk",
     "private/protocol",
     "private/protocol/ec2query",
+    "private/protocol/json",
     "private/protocol/json/jsonutil",
     "private/protocol/jsonrpc",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
+    "private/protocol/restjson",
     "private/protocol/restxml",
     "private/protocol/xml",
     "private/protocol/xml/xmlutil",
     "service/acm",
+    "service/apigateway",
     "service/cloudformation",
+    "service/cloudwatchevents",
     "service/cloudwatchlogs",
     "service/cognitoidentityprovider",
     "service/dynamodb",
@@ -354,7 +358,9 @@
     "github.com/aws/aws-sdk-go-v2/aws/awserr",
     "github.com/aws/aws-sdk-go-v2/aws/external",
     "github.com/aws/aws-sdk-go-v2/service/acm",
+    "github.com/aws/aws-sdk-go-v2/service/apigateway",
     "github.com/aws/aws-sdk-go-v2/service/cloudformation",
+    "github.com/aws/aws-sdk-go-v2/service/cloudwatchevents",
     "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs",
     "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider",
     "github.com/aws/aws-sdk-go-v2/service/dynamodb",
