@@ -4,10 +4,10 @@ set -e
 
 go test
 
-pushd make
+pushd assemble
 
 go build
-./make build
-rm -f ./make
+./assemble build
+rm -f ./assemble
 
 popd

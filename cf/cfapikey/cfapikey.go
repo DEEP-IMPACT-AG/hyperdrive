@@ -36,7 +36,7 @@ package cfapikey
 
 import (
 	"context"
-	common "github.com/DEEP-IMPACT-AG/hyperdrive/common"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/common"
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws/external"

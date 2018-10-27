@@ -10,7 +10,7 @@ package test
 
 import (
 	"fmt"
-	"github.com/DEEP-IMPACT-AG/hyperdrive/make/test/cf"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/tools/assemble/cf"
 	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"

@@ -2,8 +2,8 @@ package dnscert
 
 import (
 	"bytes"
-	common "github.com/DEEP-IMPACT-AG/hyperdrive/common"
-	"github.com/DEEP-IMPACT-AG/hyperdrive/make/test/cf"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/common"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/tools/assemble/cf"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"

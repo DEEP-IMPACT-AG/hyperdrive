@@ -125,9 +125,9 @@ func WaitForStableStack(cfs *cloudformation.CloudFormation, stackName string) er
 }
 
 func GenCSN() string {
-	uuid, err := uuid.NewRandom()
+	rand, err := uuid.NewRandom()
 	if err != nil {
 		panic(err)
 	}
-	return fmt.Sprintf("hyperdrive-%s", uuid.String())
+	return fmt.Sprintf("hyperdrive-%s", rand.String())
 }

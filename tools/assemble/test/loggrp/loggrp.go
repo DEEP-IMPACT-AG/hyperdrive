@@ -2,7 +2,7 @@ package loggrp
 
 import (
 	"bytes"
-	"github.com/DEEP-IMPACT-AG/hyperdrive/make/test/cf"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/tools/assemble/cf"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
