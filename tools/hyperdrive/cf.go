@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/gobuffalo/packr"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"log"
 	"time"
 )
@@ -62,6 +64,20 @@ func accOutput(m map[string]interface{}, key, val string) {
 	}
 }
 
+func FetchStack(cfs *cloudformation.CloudFormation, stackName string) (*cloudformation.Stack, error) {
+	stacks, err := cfs.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
+		StackName: &stackName,
+	}).Send()
+	if err != nil {
+		vErr, ok := errors.Cause(err).(awserr.RequestFailure)
+		if ok && vErr.StatusCode() == 400 {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "could not fetch the stack %s", stackName)
+	}
+	return &stacks.Stacks[0], nil
+}
+
 func deployCFT(cfs *cloudformation.CloudFormation, stackName string, template map[string]interface{}, keyvals ...KeyVal) error {
 	cfeb, err := json.Marshal(template)
 	if err != nil {
@@ -73,9 +89,19 @@ func deployCFT(cfs *cloudformation.CloudFormation, stackName string, template ma
 		return err
 	}
 	csName := stackName + postFix.String()
+	stack, err := FetchStack(cfs, stackName)
+	if err != nil {
+		return nil
+	}
+	var changeSetType cloudformation.ChangeSetType
+	if stack == nil {
+		changeSetType = cloudformation.ChangeSetTypeCreate
+	} else {
+		changeSetType = cloudformation.ChangeSetTypeUpdate
+	}
 	input := cloudformation.CreateChangeSetInput{
 		ChangeSetName: &csName,
-		ChangeSetType: "CREATE",
+		ChangeSetType: changeSetType,
 		TemplateBody:  &cfes,
 		StackName:     &stackName,
 	}

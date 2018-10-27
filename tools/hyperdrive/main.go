@@ -4,20 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/gobuffalo/packr"
 	"github.com/pkg/errors"
 	"log"
 	"strings"
 )
+const HyperdriveHome = "/Users/stan/engineering/go/src/github.com/DEEP-IMPACT-AG/hyperdrive"
 
 func main() {
+	cmd.Execute()
+}
+
+func main() {
+
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	//box := packr.NewBox(HyperdriveHome)
 	ssms := ssm.New(cfg)
 	s3s := s3.New(cfg)
+	//cfs := cloudformation.New(cfg)
 	err = checkInstallation(ssms, s3s)
 	if err != nil {
 		explainInit(err)
@@ -91,5 +101,50 @@ func checkArtifactBuckets(s3s *s3.S3, region string, organizationDomain string) 
 	if versionning.Status != s3.BucketVersioningStatusEnabled {
 		return errors.Errorf("The bucket %s must have versionning enabled", bucketName)
 	}
+	return nil
+}
+
+func initHyperdrive(box *packr.Box, ssms *ssm.SSM, cfs *cloudformation.CloudFormation, organizationDomain string, regions []string) error {
+	if err := writeOrganizationNameParameter(ssms, organizationDomain); err != nil {
+		return err
+	}
+	if err := writeRegionsParameter(ssms, regions); err != nil {
+		return err
+	}
+	for _, 	region := range regions {
+		if err := ensureArtifactsBucket(box, cfs, organizationDomain, region); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeOrganizationNameParameter(ssms *ssm.SSM, organizationDomain string) error {
+	return writeHyperdriveSetting(ssms, organizationDomain, false, "organizationDomain")
+}
+
+func writeRegionsParameter(ssms *ssm.SSM, regions []string) error {
+	regionsValue, err := json.Marshal(regions)
+	if err != nil {
+		return errors.Wrapf(err, "regions %v", regions)
+	}
+	return writeHyperdriveSetting(ssms, string(regionsValue), true,"regions")
+}
+
+func writeHyperdriveSetting(ssms *ssm.SSM, value string, override bool, elements ...string) error {
+	parameterPath := settingsPath(elements...)
+	_, err := ssms.PutParameterRequest(&ssm.PutParameterInput{
+		Name: &parameterPath,
+		Type: ssm.ParameterTypeString,
+		Overwrite: &override,
+		Value: &value,
+	}).Send()
+	if err != nil {
+		return errors.Wrapf(err, "parameter %s", parameterPath)
+	}
+	return nil
+}
+
+func ensureArtifactsBucket(box *packr.Box, cfs *cloudformation.CloudFormation, organizationDomain, region string) error {
 	return nil
 }

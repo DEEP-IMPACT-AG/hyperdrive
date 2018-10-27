@@ -3,6 +3,7 @@ package cf
 import (
 	"bytes"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws/awserr"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -11,14 +12,18 @@ import (
 	"time"
 )
 
-func FetchStack(cfs *cloudformation.CloudFormation, stackName string) (cloudformation.Stack, error) {
+func FetchStack(cfs *cloudformation.CloudFormation, stackName string) (*cloudformation.Stack, error) {
 	stacks, err := cfs.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
 		StackName: &stackName,
 	}).Send()
 	if err != nil {
-		return cloudformation.Stack{}, errors.Wrapf(err, "could not fetch the stack %s", stackName)
+		vErr, ok := errors.Cause(err).(awserr.RequestFailure)
+		if ok && vErr.StatusCode() == 400 {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "could not fetch the stack %s", stackName)
 	}
-	return stacks.Stacks[0], nil
+	return &stacks.Stacks[0], nil
 }
 
 func DeleteStack(cfs *cloudformation.CloudFormation, stackId string) error {
