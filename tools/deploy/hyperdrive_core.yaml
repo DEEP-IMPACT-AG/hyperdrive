@@ -35,7 +35,7 @@ Resources:
       AutoPublishAlias: live
       CodeUri: ../../dist/linux_amd64/cfapikey
       Description: Cloudformation Custom Resource for apg api keys for Cloudfront.
-      Handler: loggrp
+      Handler: cfapikey
       MemorySize: 128
       Role: !GetAtt CfApiKeyRole.Arn
       Runtime: go1.x
@@ -232,7 +232,7 @@ Resources:
       AutoPublishAlias: live
       CodeUri: ../../dist/linux_amd64/rotatecfapikey
       Description: Cloudformation Custom Resource for apg api keys for Cloudfront.
-      Handler: loggrp
+      Handler: rotatecfapikey
       MemorySize: 128
       Role: !GetAtt RotateCfApiKeyRole.Arn
       Runtime: go1.x
