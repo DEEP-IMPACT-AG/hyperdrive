@@ -82,6 +82,7 @@ func parametersSpecification(p []cloudformation.Parameter, ordinal string) ([]cl
 }
 
 func processEvent(ctx context.Context, event events.CloudWatchEvent) error {
+	fmt.Printf("event: %+v\n", event)
 	ruleArn := event.Resources[0]
 	rule, err := cwe.DescribeRuleRequest(&cloudwatchevents.DescribeRuleInput{
 		Name: &ruleArn,
