@@ -19,7 +19,7 @@ function package () {
     cd ${SCRIPT_DIR}/../..
     goreleaser --snapshot --rm-dist
     cd ${SCRIPT_DIR}
-    S3_BUCKET=$(aws cloudformation describe-stacks --stack-name ${ARTEFACTS_STACK_NAME} | jq -r '.Stacks[0].Outputs | map(select(.OutputKey=="ArtificatsBucketName"))[0].OutputValue')
+    S3_BUCKET=$(aws cloudformation describe-stacks --stack-name ${ARTEFACTS_STACK_NAME} | jq -r '.Stacks[0].Outputs | map(select(.OutputKey=="ArtefactsBucketName"))[0].OutputValue')
     aws cloudformation package \
         --template-file=hyperdrive_core.yaml \
         --s3-bucket=${S3_BUCKET} \

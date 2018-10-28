@@ -8,7 +8,7 @@ Resources:
   CaaRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneName: {{.HostedZoneName}} 
+      HostedZoneName: {{.HostedZoneName}}
       Name: {{.DomainName}}
       ResourceRecords:
       - "0 issue \"amazon.com\""
