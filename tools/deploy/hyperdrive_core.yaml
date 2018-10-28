@@ -27,8 +27,8 @@ Resources:
             Action:
             - "apigateway:*"
             Resource:
-            - !Sub "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/apikeys"
-            - !Sub "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/apikeys/*"
+            - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys"
+            - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys/*"
   CfApiKeyFunction:
     Type: AWS::Serverless::Function
     Properties:
