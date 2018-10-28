@@ -29,6 +29,11 @@ Resources:
             Resource:
             - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys"
             - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys/*"
+          - Effect: Allow
+            Action:
+            - "cloudformation:DescribeStacks"
+            Resource:
+            - "*"
   CfApiKeyFunction:
     Type: AWS::Serverless::Function
     Properties:
