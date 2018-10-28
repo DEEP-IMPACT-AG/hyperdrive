@@ -7,31 +7,31 @@ before:
 
 builds:
 - main: cf/cfapikey/cfapikey.go
-  binary: cfapikey
+  binary: cfapikey/cfapikey
   goos:
   - linux
   goarch:
   - amd64
 - main: cf/cogclientset/cogclientset.go
-  binary: cogclientset
+  binary: cogclientset/cogclientset
   goos:
   - linux
   goarch:
   - amd64
 - main: cf/dnscert/dnscert.go
-  binary: dnscert
+  binary: dnscert/dnscert
   goos:
   - linux
   goarch:
   - amd64
 - main: cf/loggrp/loggrp.go
-  binary: loggrp
+  binary: loggrp/loggrp
   goos:
   - linux
   goarch:
   - amd64
 - main: service/rotatecfapikey/rotatecfapikey.go
-  binary: rotatecfapikey
+  binary: rotatecfapikey/rotatecfapikey
   goos:
   - linux
   goarch:
