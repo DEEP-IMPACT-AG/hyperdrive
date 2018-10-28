@@ -1,7 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: The S3 Bucket(s) for stored hyperdrive resources
+Description: The S3 Bucket for hyperdrive artefacts
 Parameters:
   BaseDomainName:
+    Type: String
+  Version:
     Type: String
 Resources:
   ArtefactsBucket:
@@ -20,3 +22,7 @@ Outputs:
     Value: !Ref ArtefactsBucket
     Export:
       Name: !Sub "${AWS::StackName}-ArtefactsBucketName"
+  Version:
+    Value: !Ref Version
+    Export:
+      Name: !Sub "${AWS::StackName}-Version"

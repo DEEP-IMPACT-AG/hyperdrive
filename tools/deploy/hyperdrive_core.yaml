@@ -1,0 +1,319 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Hyperdrive Core Resources
+Parameters:
+  Version:
+    Type: String
+Resources:
+  CfApiKeyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: apikey
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "apigateway:*"
+            Resource:
+            - !Sub "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/apikeys"
+            - !Sub "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/apikeys/*"
+  CfApiKeyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/cfapikey
+      Description: Cloudformation Custom Resource for apg api keys for Cloudfront.
+      Handler: loggrp
+      MemorySize: 128
+      Role: !GetAtt CfApiKeyRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  CfApiKeyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - "/aws/lambda/${LambdaName}"
+        - LambdaName: !Ref CfApiKeyFunction
+      RetentionInDays: 90
+  CfApiKeyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CfApiKeyFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  CognitoClientSettingsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: cog
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "cognito-idp:UpdateUserPoolClient"
+            Resource:
+            - "*"
+  CognitoClientSettingsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/cogclientset
+      Description: Cloudformation Custom Resource for configuring a Cognito User Pool Client.
+      Handler: cogclientset
+      MemorySize: 128
+      Role: !GetAtt CognitoClientSettingsRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  CognitoClientSettingsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - "/aws/lambda/${LambdaName}"
+        - LambdaName: !Ref CognitoClientSettingsFunction
+      RetentionInDays: 90
+  CognitoClientSettingsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CognitoClientSettingsFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  DnsCertificateRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: acm
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "acm:*"
+            Resource:
+            - "*"
+  DnsCertificateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/dnscert
+      Description: Cloudformation Custom Resource for SSL Certificates validated via DNS.
+      Handler: dnscert
+      MemorySize: 128
+      Role: !GetAtt DnsCertificateRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  DnsCertificateLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - "/aws/lambda/${LambdaName}"
+        - LambdaName: !Ref DnsCertificateFunction
+      RetentionInDays: 90
+  DnsCertificatePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt DnsCertificateFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  LogGroupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: cloudwatchlogs
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "logs:*"
+            Resource:
+            - "*"
+  LogGroupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/loggrp
+      Description: Cloudformation Custom Resource for log groups with tags and other regions
+      Handler: loggrp
+      MemorySize: 128
+      Role: !GetAtt LogGroupRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  LogGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - "/aws/lambda/${LambdaName}"
+        - LambdaName: !Ref LogGroupFunction
+      RetentionInDays: 90
+  LogGroupPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt LogGroupFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  RotateCfApiKeyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: cloudformation
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "cloudformation:CreateChangeSet"
+            - "cloudformation:DeleteChangeSet"
+            - "cloudformation:DescribeChangeSet"
+            - "cloudformation:DescribeStacks"
+            - "cloudformation:ExecuteChangeSet"
+            - "cloudformation:UpdateStack"
+            Resource:
+            - "*"
+  RotateCfApiKeyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/rotatecfapikey
+      Description: Cloudformation Custom Resource for apg api keys for Cloudfront.
+      Handler: loggrp
+      MemorySize: 128
+      Role: !GetAtt RotateCfApiKeyRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  RotateCfApiKeyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - "/aws/lambda/${LambdaName}"
+        - LambdaName: !Ref RotateCfApiKeyFunction
+      RetentionInDays: 90
+  RotateCfApiKeyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RotateCfApiKeyFunction.Arn
+      Principal: events.amazonaws.com
+
+Outputs:
+  CfApiKey:
+    Value: !GetAtt CfApiKeyFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CfApiKey"
+  CfApiKeyAlias:
+    Value: !Ref CfApiKeyFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-CfApiKeyAlias"
+  CfApiKeyVersion:
+    Value: !Ref CfApiKeyFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-CfApiKeyVersion"
+  CognitoClientSettings:
+    Value: !GetAtt CognitoClientSettingsFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoClientSettings"
+  CognitoClientSettingsAlias:
+    Value: !Ref CognitoClientSettingsFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoClientSettingsAlias"
+  CognitoClientSettingsVersion:
+    Value: !Ref CognitoClientSettingsFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoClientSettingsVersion"
+  DnsCertificate:
+    Value: !GetAtt DnsCertificateFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-DnsCertificate"
+  DnsCertificateAlias:
+    Value: !Ref DnsCertificateFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-DnsCertificateAlias"
+  DnsCertificateVersion:
+    Value: !Ref DnsCertificateFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-DnsCertificateVersion"
+  LogGroup:
+    Value: !GetAtt LogGroupFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-LogGroup"
+  LogGroupAlias:
+    Value: !Ref LogGroupFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-LogGroupAlias"
+  LogGroupVersion:
+    Value: !Ref LogGroupFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-LogGroupVersion"
+  RotateCfApiKey:
+    Value: !GetAtt RotateCfApiKeyFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-RotateCfApiKey"
+  RotateCfApiKeyAlias:
+    Value: !Ref RotateCfApiKeyFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-RotateCfApiKeyAlias"
+  RotateCfApiKeyVersion:
+    Value: !Ref RotateCfApiKeyFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-RotateCfApiKeyVersion"
+  Version:
+    Value: !Ref Version
+    Export:
+      Name: !Sub "${AWS::StackName}-Version"
