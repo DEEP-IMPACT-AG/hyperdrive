@@ -5,6 +5,15 @@ Parameters:
     Type: String
     Default: HyperdriveCore
 Resources:
+  CaaRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: {{.HostedZoneName}} 
+      Name: {{.DomainName}}
+      ResourceRecords:
+      - "0 issue \"amazon.com\""
+      TTL: 300
+      Type: CAA
   Certificate:
     Type: Custom::DnsCertificate
     Properties:
@@ -18,6 +27,8 @@ Resources:
       Tags:
       - Key: test
         Value: {{.TagValue}}
+    DependsOn:
+    - CaaRecord
   DnsRecordDomainName:
     Type: AWS::Route53::RecordSet
     Properties:
