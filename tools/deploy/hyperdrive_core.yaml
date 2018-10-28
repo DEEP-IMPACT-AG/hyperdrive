@@ -229,6 +229,7 @@ Resources:
             - "cloudformation:DescribeStacks"
             - "cloudformation:ExecuteChangeSet"
             - "cloudformation:UpdateStack"
+            - "events:DescribeRule"
             Resource:
             - "*"
   RotateCfApiKeyFunction:
