@@ -11,6 +11,10 @@ Resources:
     Properties:
       BucketName:
         Fn::Sub: "${AWS::Region}.hyperdrive.${BaseDomainName}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
       VersioningConfiguration:
         Status: Enabled
 Outputs:
