@@ -15,6 +15,7 @@ Resources:
     Properties:
       UserPoolId:
         Fn::ImportValue: !Sub "${UserPoolStack}-UserPoolId"
+      GenerateSecret: true
       WriteAttributes:
       - email
   CognitoUserPoolClientSettings:
