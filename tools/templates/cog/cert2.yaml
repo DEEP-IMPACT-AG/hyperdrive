@@ -47,8 +47,15 @@ Resources:
         Fn::ImportValue:
           !Sub ${HyperdriveCore}-DnsCertificate
       DomainName: !Ref DomainName
-      SubjectAlternativeNames:
-      - !Ref IdentityDomainName
+    DependsOn:
+    - CaaRecords
+  IdentityCertificate:
+    Type: "Custom::DnsCertificate"
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-DnsCertificate
+      DomainName: !Ref IdentityDomainName
       Region: us-east-1
     DependsOn:
     - CaaRecords
@@ -69,11 +76,11 @@ Resources:
         Type: CNAME
       - Name:
           Fn::GetAtt:
-          - Certificate
+          - IdentityCertificate
           - !Ref DNSIdentityDomainRecordName
         ResourceRecords:
         - Fn::GetAtt:
-          - Certificate
+          - IdentityCertificate
           - !Ref DNSIdentityDomainRecordValue
         TTL: 300
         Type: CNAME
@@ -107,14 +114,14 @@ Outputs:
   DNSIdentityDomainRecordName:
     Value:
       Fn::GetAtt:
-      - Certificate
+      - IdentityCertificate
       - !Ref DNSIdentityDomainRecordName
     Export:
       Name: !Sub "${AWS::StackName}-DNSIdentityDomainRecordName"
   DNSIdentityDomainRecordValue:
     Value:
       Fn::GetAtt:
-      - Certificate
+      - IdentityCertificate
       - !Ref DNSIdentityDomainRecordValue
     Export:
       Name: !Sub "${AWS::StackName}-DNSIdentityDomainRecordValue"
@@ -122,3 +129,7 @@ Outputs:
     Value: !Ref Certificate
     Export:
       Name: !Sub "${AWS::StackName}-CertificateArn"
+  IdentityCertificateArn:
+    Value: !Ref IdentityCertificate
+    Export:
+      Name: !Sub "${AWS::StackName}-IdentityCertificateArn"

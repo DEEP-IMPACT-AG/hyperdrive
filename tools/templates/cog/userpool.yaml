@@ -16,7 +16,7 @@ Resources:
         PreSignUp:
           Fn::ImportValue: !Sub "${HyperdriveCore}-CogCond"
       UserPoolName:
-        Fn::ImportValue: !Sub "${CertStack}-DomainName"
+        Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
       UsernameAttributes:
       - email
   CognitoPoolDomain:
@@ -29,7 +29,7 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       CustomDomainConfig:
         CertificateArn:
-          Fn::ImportValue: !Sub "${CertStack}-CertificateArn"
+          Fn::ImportValue: !Sub "${CertStack}-IdentityCertificateArn"
   CognitoPoolDomainDnsRecord:
     Type: AWS::Route53::RecordSet
     Properties:
