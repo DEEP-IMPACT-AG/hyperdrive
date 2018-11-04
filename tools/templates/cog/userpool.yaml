@@ -69,7 +69,11 @@ Resources:
         email: email
         username: sub
 Outputs:
-  UserPool:
+  UserPoolId:
     Value: !Ref CognitoUserPool
     Export:
-      Name: !Sub "${AWS::StackName}-UserPool"
+      Name: !Sub "${AWS::StackName}-UserPoolId"
+  UserPoolArn:
+    Value: !GetAtt CognitoUserPool.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPoolArn"

@@ -14,7 +14,7 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId:
-        Fn::ImportValue: !Sub "${UserPoolStack}-UserPool"
+        Fn::ImportValue: !Sub "${UserPoolStack}-UserPoolId"
       WriteAttributes:
       - email
   CognitoUserPoolClientSettings:
@@ -24,8 +24,7 @@ Resources:
         Fn::ImportValue:
           !Sub ${HyperdriveCore}-CognitoClientSettings
       UserPoolId:
-        Fn::ImportValue:
-          !Sub ${UserPoolStack}-UserPool
+        Fn::ImportValue: !Sub "${UserPoolStack}-UserPoolId"
       UserPoolClientId: !Ref CognitoUserPoolClient
       AllowedOAuthFlows:
       - code
@@ -46,3 +45,8 @@ Resources:
       SupportedIdentityProviders:
       - COGNITO
       - Google
+Outputs:
+  UserPoolClientId:
+    Value: !Ref CognitoUserPoolClient
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPoolClientId"
