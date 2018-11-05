@@ -57,7 +57,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt CfApiKeyFunction.Arn
+      FunctionName: !GetAtt CogCondFunction.Arn
       Principal: cognito-idp.amazonaws.com
   CfApiKeyRole:
     Type: AWS::IAM::Role
