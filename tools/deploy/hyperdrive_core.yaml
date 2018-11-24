@@ -326,6 +326,59 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt DnsCertificateFunction.Arn
       Principal: cloudformation.amazonaws.com
+  ListenerRuleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - "sts:AssumeRole"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+      - PolicyName: elb
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - "elasticloadbalancing:CreateRule"
+            - "elasticloadbalancing:DeleteRule"
+            - "elasticloadbalancing:DescribeListeners"
+            - "elasticloadbalancing:DescribeRules"
+            - "elasticloadbalancing:ModifyRule"
+            - "elasticloadbalancing:SetRulePriorities"
+            Resource:
+            - "*"
+  ListenerRuleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/listenerrule
+      Description: Cloudformation Custom Resource for ELB2 Listener Rules, all actions
+      Handler: dnscert
+      MemorySize: 128
+      Role: !GetAtt ListenerRuleRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  ListenerRuleLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+        - "/aws/lambda/${LambdaName}"
+        - LambdaName: !Ref ListenerRuleFunction
+      RetentionInDays: 90
+  ListenerRulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ListenerRuleFunction.Arn
+      Principal: cloudformation.amazonaws.com
   LogGroupRole:
     Type: AWS::IAM::Role
     Properties:

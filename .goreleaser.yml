@@ -42,6 +42,12 @@ builds:
   - linux
   goarch:
   - amd64
+- main: cf/listenerrule/listenerrule.go
+  binary: listenerrule/listenerrule
+  goos:
+  - linux
+  goarch:
+  - amd64
 - main: cf/loggrp/loggrp.go
   binary: loggrp/loggrp
   goos:
