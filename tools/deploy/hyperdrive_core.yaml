@@ -630,6 +630,7 @@ Resources:
           - Effect: Allow
             Action:
               - "iam:PassRole"
+              - "iam:GetRole"
             Resource:
               - !GetAtt CloudformationECSStackRole.Arn
               - !GetAtt CloudformationLambdaStackRole.Arn
@@ -654,8 +655,15 @@ Resources:
             Action:
               - "cloudformation:CreateChangeSet"
               - "cloudformation:CreateStack"
+              - "cloudformation:DescribeChangeSet"
+              - "cloudformation:DescribeStackEvents"
+              - "cloudformation:DescribeStackInstance"
+              - "cloudformation:DescribeStackResource"
+              - "cloudformation:DescribeStackResources"
+              - "cloudformation:DescribeStacks"
               - "cloudformation:ExecuteChangeSet"
               - "cloudformation:UpdateStack"
+              - "cloudformation:GetTemplateSummary"
               - "cloudformation:ValidateTemplate"
             Resource:
               - "*"
