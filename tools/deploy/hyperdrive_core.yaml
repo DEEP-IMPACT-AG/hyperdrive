@@ -10,33 +10,34 @@ Parameters:
   HyperdriveKmsKeyId:
     Type: String
 Resources:
+  # 1. Cloudformation custom resources
   CogCondRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: ssm
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Sid: ssm
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "ssm:DescribeParameters"
-            - "ssm:GetParametersByPath"
-            - "ssm:GetParameter"
-            - "ssm:GetParameters"
-            Resource:
-            - "arn:aws:ssm:*:*:parameter/hyperdrive/cogcong/*"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ssm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Sid: ssm
+                Action:
+                  - "ssm:DescribeParameters"
+                  - "ssm:GetParametersByPath"
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                Resource:
+                  - "arn:aws:ssm:*:*:parameter/hyperdrive/cogcong/*"
   CogCondFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -50,8 +51,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref CogCondFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref CogCondFunction
       RetentionInDays: 90
   CogCondPermission:
     Type: AWS::Lambda::Permission
@@ -65,29 +66,29 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
       ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
       Policies:
-      - PolicyName: apikey
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - "apigateway:*"
-            Resource:
-            - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys"
-            - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys/*"
-          - Effect: Allow
-            Action:
-            - "cloudformation:DescribeStacks"
-            Resource:
-            - "*"
+        - PolicyName: apikey
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "apigateway:*"
+                Resource:
+                  - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys"
+                  - !Sub "arn:aws:apigateway:${AWS::Region}::/apikeys/*"
+              - Effect: Allow
+                Action:
+                  - "cloudformation:DescribeStacks"
+                Resource:
+                  - "*"
   CfApiKeyFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -104,8 +105,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref CfApiKeyFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref CfApiKeyFunction
       RetentionInDays: 90
   CfApiKeyPermission:
     Type: AWS::Lambda::Permission
@@ -119,23 +120,23 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: cog
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "cognito-idp:UpdateUserPoolClient"
-            Resource:
-            - "*"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: cog
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:UpdateUserPoolClient"
+                Resource:
+                  - "*"
   CognitoClientSettingsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -152,8 +153,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref CognitoClientSettingsFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref CognitoClientSettingsFunction
       RetentionInDays: 90
   CognitoClientSettingsPermission:
     Type: AWS::Lambda::Permission
@@ -167,25 +168,25 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: cog
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "cognito-idp:CreateUserPoolDomain"
-            - "cognito-idp:DeleteUserPoolDomain"
-            - "cloudfront:UpdateDistribution"
-            Resource:
-            - "*"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: cog
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:CreateUserPoolDomain"
+                  - "cognito-idp:DeleteUserPoolDomain"
+                  - "cloudfront:UpdateDistribution"
+                Resource:
+                  - "*"
   CognitoDomainFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -202,8 +203,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref CognitoDomainFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref CognitoDomainFunction
       RetentionInDays: 90
   CognitoDomainPermission:
     Type: AWS::Lambda::Permission
@@ -217,42 +218,42 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
       ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
       Policies:
-      - PolicyName: idp
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - "cognito-idp:CreateIdentityProvider"
-            - "cognito-idp:DeleteIdentityProvider"
-            - "cognito-idp:UpdateIdentityProvider"
-            Resource:
-            - "*"
-      - PolicyName: ssm
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - ssm:GetParameter
-            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hyperdrive/cogidp/*"
-      - PolicyName: kms
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - kms:Decrypt
-            Resource:
-            - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${HyperdriveKmsKeyId}"
+        - PolicyName: idp
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cognito-idp:CreateIdentityProvider"
+                  - "cognito-idp:DeleteIdentityProvider"
+                  - "cognito-idp:UpdateIdentityProvider"
+                Resource:
+                  - "*"
+        - PolicyName: ssm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/hyperdrive/cogidp/*"
+        - PolicyName: kms
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/${HyperdriveKmsKeyId}"
   CognitoIdentityProviderFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -269,8 +270,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref CognitoIdentityProviderFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref CognitoIdentityProviderFunction
       RetentionInDays: 90
   CognitoIdentityProviderPermission:
     Type: AWS::Lambda::Permission
@@ -284,23 +285,23 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: acm
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "acm:*"
-            Resource:
-            - "*"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: acm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "acm:*"
+                Resource:
+                  - "*"
   DnsCertificateFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -317,8 +318,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref DnsCertificateFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref DnsCertificateFunction
       RetentionInDays: 90
   DnsCertificatePermission:
     Type: AWS::Lambda::Permission
@@ -332,23 +333,23 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: cloudwatchlogs
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "logs:*"
-            Resource:
-            - "*"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: cloudwatchlogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:*"
+                Resource:
+                  - "*"
   LogGroupFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -365,8 +366,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref LogGroupFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref LogGroupFunction
       RetentionInDays: 90
   LogGroupPermission:
     Type: AWS::Lambda::Permission
@@ -380,35 +381,14 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: s3
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-          - Effect: Allow
-            Sid: ssm
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "s3:DeleteObject"
-            - "s3:DeleteObjectVersion"
-            - "s3:GetObject"
-            - "s3:GetObjectVersion"
-            - "s3:PutObject"
-            - "s3:ListBucket"
-            - "s3:ListBucketVersions"
-            - "s3:GetBucketVersioning"
-            Resource:
-            - Fn::ImportValue: !Sub "${HyperdriveArtefactsStack}-ArtefactsBucketArn"
-            - Fn::Sub:
-              - "${Bucket}/*"
-              - Bucket:
-                  Fn::ImportValue: !Sub "${HyperdriveArtefactsStack}-ArtefactsBucketArn"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - !Ref HyperdriveS3BucketPolicy
   S3TemplateFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -425,8 +405,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref S3TemplateFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref S3TemplateFunction
       RetentionInDays: 90
   S3TemplatePermission:
     Type: AWS::Lambda::Permission
@@ -440,29 +420,29 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Effect: "Allow"
-          Principal:
-            Service: lambda.amazonaws.com
-          Action:
-          - "sts:AssumeRole"
-      ManagedPolicyArns:
-      - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-      Policies:
-      - PolicyName: cloudformation
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
             Action:
-            - "cloudformation:CreateChangeSet"
-            - "cloudformation:DeleteChangeSet"
-            - "cloudformation:DescribeChangeSet"
-            - "cloudformation:DescribeStacks"
-            - "cloudformation:ExecuteChangeSet"
-            - "cloudformation:UpdateStack"
-            - "events:DescribeRule"
-            Resource:
-            - "*"
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: cloudformation
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:DeleteChangeSet"
+                  - "cloudformation:DescribeChangeSet"
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:UpdateStack"
+                  - "events:DescribeRule"
+                Resource:
+                  - "*"
   RotateCfApiKeyFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -479,8 +459,8 @@ Resources:
     Properties:
       LogGroupName:
         Fn::Sub:
-        - "/aws/lambda/${LambdaName}"
-        - LambdaName: !Ref RotateCfApiKeyFunction
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref RotateCfApiKeyFunction
       RetentionInDays: 90
   RotateCfApiKeyPermission:
     Type: AWS::Lambda::Permission
@@ -488,7 +468,207 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt RotateCfApiKeyFunction.Arn
       Principal: events.amazonaws.com
-
+  # 2. Cloudformation Policies/Roles
+  CloudformationECSStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      RoleName: HyperdriveCloudformationECSStackRole
+      ManagedPolicyArns:
+        - !Ref CloudformationECSPolicy
+  CloudformationLambdaStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      RoleName: HyperdriveCloudformationLambdaStackRole
+      ManagedPolicyArns:
+        - !Ref CloudformationLambdaPolicy
+  CloudformationECSLambdaStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      RoleName: HyperdriveCloudformationECSLambdaStackRole
+      ManagedPolicyArns:
+        - !Ref CloudformationECSPolicy
+        - !Ref CloudformationLambdaPolicy
+  CloudformationECSPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:getObject"
+              - "elasticloadbalancing:*"
+              - "ecs:*"
+              - "ecr:*"
+              - "logs:*"
+              - "sns:Publish"
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - "iam:GetRole"
+              - "iam:CreateRole"
+              - "iam:DeleteRole"
+              - "iam:PutRolePolicy"
+              - "iam:AttachRolePolicy"
+              - "iam:DeleteRolePolicy"
+              - "iam:DetachRolePolicy"
+              - "iam:PassRole"
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/*"
+          - Effect: Allow
+            Action:
+              - "ec2:DescribeVpcs"
+              - "ec2:DescribeSubnets"
+              - "ec2:DescribeSecurityGroups"
+              - "ec2:DescribeNetworkInterfaces"
+            Resource:
+              - "*"
+      ManagedPolicyName: HyperdriveCloudformationECSPolicy
+  CloudformationLambdaPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "lambda:*"
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - "s3:getObject"
+              - "apigateway:*"
+              - "logs:*"
+              - "sns:Publish"
+              - "cloudfront:*"
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - "iam:GetRole"
+              - "iam:CreateRole"
+              - "iam:DeleteRole"
+              - "iam:PutRolePolicy"
+              - "iam:AttachRolePolicy"
+              - "iam:DeleteRolePolicy"
+              - "iam:DetachRolePolicy"
+              - "iam:PassRole"
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/*"
+          - Effect: Allow
+            Action:
+              - "cloudformation:CreateChangeSet"
+            Resource:
+              - "arn:aws:cloudformation:eu-west-1:aws:transform/Serverless-2016-10-31"
+          - Effect: Allow
+            Action:
+              - "ec2:DescribeVpcs"
+              - "ec2:DescribeSubnets"
+              - "ec2:DescribeSecurityGroups"
+              - "ec2:DescribeNetworkInterfaces"
+            Resource:
+              - "*"
+      ManagedPolicyName: HyperdriveCloudformationLambdaPolicy
+  HyperdriveS3BucketPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: HyperdriveS3BucketPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Sid: s3
+            Action:
+              - "s3:DeleteObject"
+              - "s3:DeleteObjectVersion"
+              - "s3:GetObject"
+              - "s3:GetObjectVersion"
+              - "s3:PutObject"
+              - "s3:ListBucket"
+              - "s3:ListBucketVersions"
+              - "s3:GetBucketVersioning"
+            Resource:
+              - Fn::ImportValue: !Sub "${HyperdriveArtefactsStack}-ArtefactsBucketArn"
+              - Fn::Sub:
+                  - "${Bucket}/*"
+                  - Bucket:
+                      Fn::ImportValue: !Sub "${HyperdriveArtefactsStack}-ArtefactsBucketArn"
+  CloudformationBuilderPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: HyperdriveCloudformationBuilderPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "iam:PassRole"
+              - "iam:GetRole"
+            Resource:
+              - !GetAtt CloudformationECSStackRole.Arn
+              - !GetAtt CloudformationLambdaStackRole.Arn
+              - !GetAtt CloudformationECSLambdaStackRole.Arn
+          - Effect: Allow
+            Action:
+              - "ecr:GetAuthorizationToken"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:GetRepositoryPolicy"
+              - "ecr:DescribeRepositories"
+              - "ecr:ListImages"
+              - "ecr:DescribeImages"
+              - "ecr:BatchGetImage"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+              - "ecr:PutImage"
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - "cloudformation:CreateChangeSet"
+              - "cloudformation:CreateStack"
+              - "cloudformation:DescribeChangeSet"
+              - "cloudformation:DescribeStackEvents"
+              - "cloudformation:DescribeStackInstance"
+              - "cloudformation:DescribeStackResource"
+              - "cloudformation:DescribeStackResources"
+              - "cloudformation:DescribeStacks"
+              - "cloudformation:ExecuteChangeSet"
+              - "cloudformation:UpdateStack"
+              - "cloudformation:GetTemplateSummary"
+              - "cloudformation:ValidateTemplate"
+            Resource:
+              - "*"
 Outputs:
   CogCond:
     Value: !GetAtt CogCondFunction.Arn
@@ -598,6 +778,34 @@ Outputs:
     Value: !Ref RotateCfApiKeyFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-RotateCfApiKeyVersion"
+  CloudformationECSStackRole:
+    Value: !GetAtt CloudformationECSStackRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudformationECSStackRole"
+  CloudformationLambdaStackRole:
+    Value: !GetAtt CloudformationLambdaStackRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudformationLambdaStackRole"
+  CloudformationECSLambdaStackRole:
+    Value: !GetAtt CloudformationECSLambdaStackRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudformationECSLambdaStackRole"
+  CloudformationECSPolicy:
+    Value: !Ref CloudformationECSPolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudformationECSPolicy"
+  CloudformationLambdaPolicy:
+    Value: !Ref CloudformationLambdaPolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudformationLambdaPolicy"
+  HyperdriveS3BucketPolicy:
+    Value: !Ref HyperdriveS3BucketPolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-HyperdriveS3BucketPolicy"
+  CloudformationBuilderPolicy:
+    Value: !Ref CloudformationBuilderPolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudformationBuilderPolicy"
   Version:
     Value: !Ref Version
     Export:

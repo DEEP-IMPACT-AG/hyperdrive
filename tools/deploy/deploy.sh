@@ -31,7 +31,7 @@ function deploy () {
     cd ${SCRIPT_DIR}/../../dist
     local key_id=$(aws kms describe-key --key-id alias/aws/ssm | jq -r ".KeyMetadata.KeyId")
     aws cloudformation deploy \
-        --capabilities CAPABILITY_IAM \
+        --capabilities CAPABILITY_NAMED_IAM \
         --template-file ${VERSION}.yaml \
         --stack-name HyperdriveCore \
         --parameter-override \
