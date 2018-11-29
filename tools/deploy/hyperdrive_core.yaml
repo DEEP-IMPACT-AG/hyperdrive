@@ -527,6 +527,7 @@ Resources:
               - "elasticloadbalancing:*"
               - "ecs:*"
               - "ecr:*"
+              - "logs:*"
               - "sns:Publish"
             Resource:
               - "*"
@@ -566,6 +567,7 @@ Resources:
             Action:
               - "s3:getObject"
               - "apigateway:*"
+              - "logs:*"
               - "sns:Publish"
               - "cloudfront:*"
             Resource:
