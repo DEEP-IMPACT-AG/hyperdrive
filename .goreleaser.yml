@@ -42,8 +42,20 @@ builds:
   - linux
   goarch:
   - amd64
+- main: cf/ecrcleanup/ecrcleanup.go
+  binary: ecrcleanup/ecrcleanup
+  goos:
+  - linux
+  goarch:
+  - amd64
 - main: cf/loggrp/loggrp.go
   binary: loggrp/loggrp
+  goos:
+  - linux
+  goarch:
+  - amd64
+- main: cf/s3cleanup/s3cleanup.go
+  binary: s3cleanup/s3cleanup
   goos:
   - linux
   goarch:
