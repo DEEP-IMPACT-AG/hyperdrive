@@ -111,7 +111,7 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 	case cfn.RequestDelete:
 		if !common.IsFailurePhysicalResourceId(event.PhysicalResourceID) {
 			stacks, err := cf.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
-				StackName: &event.PhysicalResourceID,
+				StackName: &event.StackID,
 			}).Send()
 			if err != nil {
 				return event.PhysicalResourceID, nil, errors.Wrapf(err, "could not fetch the stack for the resource %s", event.PhysicalResourceID)
@@ -137,35 +137,38 @@ func deleteObjects(properties S3CleanupProperties) error {
 	versions, err := s3.ListObjectVersionsRequest(&awss3.ListObjectVersionsInput{
 		Bucket: &properties.Bucket,
 		Prefix: &properties.Prefix,
-	}).Send();
+	}).Send()
 	if err != nil {
 		return errors.Wrapf(err, "could not fetch versions for the bucket %s", properties.Bucket)
 	}
 	quiet := true
-	
+
 	for {
-		objects := make([]awss3.ObjectIdentifier, 0, len(versions.Versions));
-		for i, version := range versions.Versions {
-			objects[i] = awss3.ObjectIdentifier{
-				Key: version.Key,
-				VersionId: version.VersionId,
+		versionsLength := len(versions.Versions)
+		if versionsLength > 0 {
+			objects := make([]awss3.ObjectIdentifier, versionsLength)
+			for i, version := range versions.Versions {
+				objects[i] = awss3.ObjectIdentifier{
+					Key:       version.Key,
+					VersionId: version.VersionId,
+				}
 			}
-		}
-		_, err = s3.DeleteObjectsRequest(&awss3.DeleteObjectsInput{
-			Bucket: &properties.Bucket,
-			Delete: &awss3.Delete{
-				Objects: objects,
-				Quiet: &quiet,
-			},
-		}).Send();
-		if err != nil {
-			return errors.Wrapf(err, "could not delete objects from the s3 bucket %s", properties.Bucket)
+			_, err = s3.DeleteObjectsRequest(&awss3.DeleteObjectsInput{
+				Bucket: &properties.Bucket,
+				Delete: &awss3.Delete{
+					Objects: objects,
+					Quiet:   &quiet,
+				},
+			}).Send()
+			if err != nil {
+				return errors.Wrapf(err, "could not delete objects from the s3 bucket %s", properties.Bucket)
+			}
 		}
 		if *versions.IsTruncated {
 			versions, err = s3.ListObjectVersionsRequest(&awss3.ListObjectVersionsInput{
-				Bucket: &properties.Bucket,
-				Prefix: &properties.Prefix,
-				KeyMarker: versions.NextKeyMarker,
+				Bucket:          &properties.Bucket,
+				Prefix:          &properties.Prefix,
+				KeyMarker:       versions.NextKeyMarker,
 				VersionIdMarker: versions.NextVersionIdMarker,
 			}).Send()
 			if err != nil {

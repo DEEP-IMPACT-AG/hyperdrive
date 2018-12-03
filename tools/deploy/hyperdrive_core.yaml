@@ -348,6 +348,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - "ecr:*"
+                  - "cloudformation:DescribeStacks"
                 Resource:
                   - "*"
   EcrCleanupFunction:
@@ -444,6 +445,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - "s3:*"
+                  - "cloudformation:DescribeStacks"
                 Resource:
                   - "*"
   S3CleanupFunction:

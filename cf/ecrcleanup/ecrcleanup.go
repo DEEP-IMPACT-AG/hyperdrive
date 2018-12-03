@@ -104,7 +104,7 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 	case cfn.RequestDelete:
 		if !common.IsFailurePhysicalResourceId(event.PhysicalResourceID) {
 			stacks, err := cf.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
-				StackName: &event.PhysicalResourceID,
+				StackName: &event.StackID,
 			}).Send()
 			if err != nil {
 				return event.PhysicalResourceID, nil, errors.Wrapf(err, "could not fetch the stack for the resource %s", event.PhysicalResourceID)
@@ -135,12 +135,14 @@ func deleteImages(repositoryArn string) error {
 		return errors.Wrapf(err, "could not fetch images for the repository %s", repositoryArn)
 	}
 	for {
-		_, err := ecr.BatchDeleteImageRequest(&awsecr.BatchDeleteImageInput{
-			ImageIds:       images.ImageIds,
-			RepositoryName: &repositoryArn,
-		}).Send()
-		if err != nil {
-			return errors.Wrapf(err, "could not delete images from the repository %s", repositoryArn)
+		if len(images.ImageIds) > 0 {
+			_, err := ecr.BatchDeleteImageRequest(&awsecr.BatchDeleteImageInput{
+				ImageIds:       images.ImageIds,
+				RepositoryName: &repositoryArn,
+			}).Send()
+			if err != nil {
+				return errors.Wrapf(err, "could not delete images from the repository %s", repositoryArn)
+			}
 		}
 		if images.NextToken == nil {
 			return nil
