@@ -23,17 +23,17 @@
 //     ServiceToken:
 //       Fn::ImportValue:
 //         !Sub ${HyperdriveCore}-EcrCleanup
-//     Repository: <repository arn>
+//     Repository: <repository name>
 // ```
 //
 // ## Properties
 //
 // `Repository`
 //
-// > The arn of the repository to clean when the resource is deleted while its stack
+// > The name of the repository to clean when the resource is deleted while its stack
 // > itself is deleted
 // >
-// > _Type_: ARN
+// > _Type_: Repository Name
 // >
 // > _Required_: Yes
 // >
@@ -94,7 +94,7 @@ func ecrCleanupProperties(input map[string]interface{}) (EcrCleanupProperties, e
 //       repository.
 //    3. the stack is not being delete: it is a NOP as well.
 // 2. Create, Update: In that case, it is a NOP, the physical ID is simply
-//    the ARN of the repository. Giving a new repository will replace the resource.
+//    the logical ID of the resource.
 func processEvent(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	properties, err := ecrCleanupProperties(event.ResourceProperties)
 	if err != nil {
@@ -127,32 +127,32 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 }
 
 // We delete all the images in batches.
-func deleteImages(repositoryArn string) error {
+	func deleteImages(repositoryName string) error {
 	images, err := ecr.ListImagesRequest(&awsecr.ListImagesInput{
-		RepositoryName: &repositoryArn,
+		RepositoryName: &repositoryName,
 	}).Send()
 	if err != nil {
-		return errors.Wrapf(err, "could not fetch images for the repository %s", repositoryArn)
+		return errors.Wrapf(err, "could not fetch images for the repository %s", repositoryName)
 	}
 	for {
 		if len(images.ImageIds) > 0 {
 			_, err := ecr.BatchDeleteImageRequest(&awsecr.BatchDeleteImageInput{
 				ImageIds:       images.ImageIds,
-				RepositoryName: &repositoryArn,
+				RepositoryName: &repositoryName,
 			}).Send()
 			if err != nil {
-				return errors.Wrapf(err, "could not delete images from the repository %s", repositoryArn)
+				return errors.Wrapf(err, "could not delete images from the repository %s", repositoryName)
 			}
 		}
 		if images.NextToken == nil {
 			return nil
 		}
 		images, err = ecr.ListImagesRequest(&awsecr.ListImagesInput{
-			RepositoryName: &repositoryArn,
+			RepositoryName: &repositoryName,
 			NextToken:      images.NextToken,
 		}).Send()
 		if err != nil {
-			return errors.Wrapf(err, "could not fetch images for the repository %s", repositoryArn)
+			return errors.Wrapf(err, "could not fetch images for the repository %s", repositoryName)
 		}
 	}
 }

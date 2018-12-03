@@ -20,7 +20,7 @@
 //     ServiceToken:
 //       Fn::ImportValue:
 //         !Sub ${HyperdriveCore}-S3Cleanup
-//     Bucket: <bucket arn>
+//     Bucket: <bucket name>
 //     Prefix: <prefix>
 // ```
 //
@@ -28,10 +28,10 @@
 //
 // `Bucket`
 //
-// > The arn of the S3 Bucket to cleanup when the `s3cleanup` resource is deleted while its stack
+// > The name of the S3 Bucket to cleanup when the `s3cleanup` resource is deleted while its stack
 // > itself is deleted.
 // >
-// > _Type_: ARN
+// > _Type_: Bucket Name
 // >
 // > _Required_: Yes
 // >
@@ -100,8 +100,7 @@ func s3CleanupProperties(input map[string]interface{}) (S3CleanupProperties, err
 //       all the resources.
 //    3. the stack is not being delete: it is a NOP as well.
 // 2. Create, Update: In that case, it is a NOP, the physical ID is simply
-//    the ARN of the s3 bucket concatenated with the path.
-//    Giving a new repository will replace the resource. ???
+//    the logical ID.
 func processEvent(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {
 	properties, err := s3CleanupProperties(event.ResourceProperties)
 	if err != nil {
