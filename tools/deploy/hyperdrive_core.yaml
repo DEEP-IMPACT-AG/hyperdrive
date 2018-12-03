@@ -327,6 +327,55 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt DnsCertificateFunction.Arn
       Principal: cloudformation.amazonaws.com
+  EcrCleanupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ecr
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecr:*"
+                  - "cloudformation:DescribeStacks"
+                Resource:
+                  - "*"
+  EcrCleanupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/ecrcleanup
+      Description: Cloudformation Custom Resource for ECR Cleaning
+      Handler: ecrcleanup
+      MemorySize: 128
+      Role: !GetAtt EcrCleanupRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  EcrCleanupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref EcrCleanupFunction
+      RetentionInDays: 90
+  EcrCleanupPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt EcrCleanupFunction.Arn
+      Principal: cloudformation.amazonaws.com
   LogGroupRole:
     Type: AWS::IAM::Role
     Properties:
@@ -374,6 +423,55 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt LogGroupFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  S3CleanupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: s3
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                  - "cloudformation:DescribeStacks"
+                Resource:
+                  - "*"
+  S3CleanupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/s3cleanup
+      Description: Cloudformation Custom Resource for S3 Bucket Cleaning
+      Handler: s3cleanup
+      MemorySize: 128
+      Role: !GetAtt S3CleanupRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  S3CleanupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref S3CleanupFunction
+      RetentionInDays: 90
+  S3CleanupPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt S3CleanupFunction.Arn
       Principal: cloudformation.amazonaws.com
   S3TemplateRole:
     Type: AWS::IAM::Role
@@ -742,6 +840,18 @@ Outputs:
     Value: !Ref DnsCertificateFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-DnsCertificateVersion"
+  EcrCleanup:
+    Value: !GetAtt EcrCleanupFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrCleanup"
+  EcrCleanupAlias:
+    Value: !Ref EcrCleanupFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrCleanupAlias"
+  EcrCleanupVersion:
+    Value: !Ref EcrCleanupFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-EcrCleanupVersion"
   LogGroup:
     Value: !GetAtt LogGroupFunction.Arn
     Export:
@@ -754,6 +864,18 @@ Outputs:
     Value: !Ref LogGroupFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-LogGroupVersion"
+  S3Cleanup:
+    Value: !GetAtt S3CleanupFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-S3Cleanup"
+  S3CleanupAlias:
+    Value: !Ref S3CleanupFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-S3CleanupAlias"
+  S3CleanupVersion:
+    Value: !Ref S3CleanupFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-S3CleanupVersion"
   S3Template:
     Value: !GetAtt S3TemplateFunction.Arn
     Export:
