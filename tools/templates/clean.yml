@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Test Cleaning
+Parameters:
+  HyperdriveCore:
+    Type: String
+    Default: HyperdriveCore
+Resources:
+  S3Cleanup:
+    Type: Custom::S3Cleanup
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-S3Cleanup
+      Bucket: test.hyperdrive.sh
+      Prefix: test
+  ECRCleanup:
+    Type: Custom::EcrCleanup
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveCore}-EcrCleanup
+      Repository: test
