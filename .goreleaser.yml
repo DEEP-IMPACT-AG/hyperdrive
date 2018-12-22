@@ -60,12 +60,6 @@ builds:
   - linux
   goarch:
   - amd64
-- main: cf/s3template/s3template.go
-  binary: s3template/s3template
-  goos:
-  - linux
-  goarch:
-  - amd64
 - main: service/rotatecfapikey/rotatecfapikey.go
   binary: rotatecfapikey/rotatecfapikey
   goos:
