@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Conditions:
+  IsUsEast1:
+    Fn::Equals: [!Sub "${AWS::Region}", "us-east-1"]
+Mappings:
+  IamNames:
+    Roles:
+      Param: "/hyperdrive/test/us-east"
+Resources:
+  UsEast1Parameter:
+    Type: AWS::SSM::Parameter
+    Condition: IsUsEast1
+    Properties:
+      Name:
+        Fn::FindInMap: [IamNames, Roles, Param]
+      Type: String
+      Value: test
+Outputs:
+  Parameter:
+    Value:
+      Fn::Sub:
+        - "param::${Param}"
+        - Param:
+            Fn::FindInMap: [IamNames, Roles, Param]
+    Export:
+      Name: !Sub "${AWS::StackName}-Parameter"
