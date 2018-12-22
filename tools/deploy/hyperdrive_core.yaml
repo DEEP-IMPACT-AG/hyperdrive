@@ -53,14 +53,14 @@ Resources:
               - Fn::Sub:
                   - "${Arn}/*"
                   - Arn: !GetAtt ArtifactsBucket.Arn
-  CloudfrontLogBucket:
+  CloudfrontLogsBucket:
     Type: "AWS::S3::Bucket"
     Properties:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: !Sub "${AWS::Region}.hyperdrive.cloudfront.${BaseDomainName}"
+      BucketName: !Sub "${AWS::Region}.hyperdrive.cloudfront-logs.${BaseDomainName}"
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 90
@@ -296,18 +296,18 @@ Outputs:
     Value: !Ref CloudFrontOriginIdentity
     Export:
       Name: !Sub "${AWS::StackName}-CloudFrontOriginIdentity"
-  CloudfrontLogBucketName:
-    Value: !Ref ArtifactsBucket
+  CloudfrontLogsBucketName:
+    Value: !Ref CloudfrontLogsBucket
     Export:
-      Name: !Sub "${AWS::StackName}-CloudfrontLogBucketName"
-  CloudfrontLogBucketArn:
-    Value: !GetAtt ArtifactsBucket.Arn
+      Name: !Sub "${AWS::StackName}-CloudfrontLogsBucketName"
+  CloudfrontLogsBucketArn:
+    Value: !GetAtt CloudfrontLogsBucket.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-CloudfrontLogBucketArn"
-  CloudfrontLogBucketDomain:
-    Value: !GetAtt ArtifactsBucket.DomainName
+      Name: !Sub "${AWS::StackName}-CloudfrontLogsBucketArn"
+  CloudfrontLogsBucketDomain:
+    Value: !GetAtt CloudfrontLogsBucket.DomainName
     Export:
-      Name: !Sub "${AWS::StackName}-CloudfrontLogBucketDomain"
+      Name: !Sub "${AWS::StackName}-CloudfrontLogsBucketDomain"
   CloudformationECSStackRole:
     Value:
       Fn::Sub:
