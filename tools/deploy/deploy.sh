@@ -4,12 +4,13 @@ set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 VERSION=$(git describe --match "v*" --dirty=--DIRTY-- | sed 's:^.\(.*\)$:\1:')
-CORE_STACK_NAME=HyperdriveArtefacts
+CORE_STACK_NAME=HyperdriveCore
 
 function init () {
     aws cloudformation deploy \
         --stack-name=${CORE_STACK_NAME} \
         --template-file=${SCRIPT_DIR}/hyperdrive_core.yaml \
+        --capabilities CAPABILITY_NAMED_IAM \
         --parameter-override \
             BaseDomainName=$1 \
             Version=${VERSION}

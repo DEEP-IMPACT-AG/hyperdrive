@@ -21,12 +21,11 @@ Resources:
   ArtifactsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName:
-        Fn::Sub: "${AWS::Region}.hyperdrive.artifacts.${BaseDomainName}-test"
+      BucketName: !Sub "${AWS::Region}.hyperdrive.artifacts.${BaseDomainName}"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: AES256
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
       VersioningConfiguration:
         Status: Enabled
   CloudFrontOriginIdentity:
@@ -61,7 +60,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      BucketName: "${AWS::Region}.hyperdrive.cloudfront.${BaseDomainName}-test"
+      BucketName: !Sub "${AWS::Region}.hyperdrive.cloudfront.${BaseDomainName}"
       LifecycleConfiguration:
         Rules:
           - ExpirationInDays: 90
@@ -227,11 +226,10 @@ Resources:
               - "s3:ListBucketVersions"
               - "s3:GetBucketVersioning"
             Resource:
-              - Fn::ImportValue: !Sub "${HyperdriveCore}-ArtefactsBucketArn"
+              - !GetAtt ArtifactsBucket.Arn
               - Fn::Sub:
                   - "${Bucket}/*"
-                  - Bucket:
-                      Fn::ImportValue: !Sub "${HyperdriveCore}-ArtefactsBucketArn"
+                  - Bucket: !GetAtt ArtifactsBucket.Arn
   CloudformationBuilderPolicy:
     Type: AWS::IAM::ManagedPolicy
     Condition: IsUsEast1
