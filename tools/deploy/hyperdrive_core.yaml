@@ -9,6 +9,20 @@ Parameters:
     Default: HyperdriveArtefacts
   HyperdriveKmsKeyId:
     Type: String
+Conditions:
+  IsUsEast1:
+    Fn::Equals: [!Sub "${AWS::Region}", "us-east-1"]
+Mappings:
+  IamNaming:
+    Role:
+      CloudformationECSLambdaStackRole: HyperdriveCloudformationECSLambdaStack
+      CloudformationLambdaStackRole: HyperdriveCloudformationLambdaStack
+      CloudformationECSStackRole: HyperdriveCloudformationECSStack
+    Policy:
+      CloudformationECSPolicy: HyperdriveCloudformationECS
+      CloudformationLambdaPolicy: HyperdriveCloudformationLambda
+      HyperdriveS3BucketPolicy: HyperdriveS3Bucket
+      CloudformationBuilderPolicy: HyperdriveCloudformationBuilder
 Resources:
   # 1. Cloudformation custom resources
   CogCondRole:
@@ -473,45 +487,6 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt S3CleanupFunction.Arn
       Principal: cloudformation.amazonaws.com
-  S3TemplateRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: lambda.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-        - !Ref HyperdriveS3BucketPolicy
-  S3TemplateFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      AutoPublishAlias: live
-      CodeUri: ../../dist/linux_amd64/s3template
-      Description: Cloudformation Custom Resource to create s3 sub template in an s3 bucket
-      Handler: s3template
-      MemorySize: 128
-      Role: !GetAtt S3TemplateRole.Arn
-      Runtime: go1.x
-      Timeout: 300
-  S3TemplateLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName:
-        Fn::Sub:
-          - "/aws/lambda/${LambdaName}"
-          - LambdaName: !Ref S3TemplateFunction
-      RetentionInDays: 90
-  S3TemplatePermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt S3TemplateFunction.Arn
-      Principal: cloudformation.amazonaws.com
   RotateCfApiKeyRole:
     Type: AWS::IAM::Role
     Properties:
@@ -569,6 +544,7 @@ Resources:
   # 2. Cloudformation Policies/Roles
   CloudformationECSStackRole:
     Type: AWS::IAM::Role
+    Condition: IsUsEast1
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -579,11 +555,13 @@ Resources:
                 - "cloudformation.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      RoleName: HyperdriveCloudformationECSStackRole
+      RoleName:
+        Fn::FindInMap: [IamNaming, Role, CloudformationECSStackRole]
       ManagedPolicyArns:
         - !Ref CloudformationECSPolicy
   CloudformationLambdaStackRole:
     Type: AWS::IAM::Role
+    Condition: IsUsEast1
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -594,11 +572,13 @@ Resources:
                 - "cloudformation.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      RoleName: HyperdriveCloudformationLambdaStackRole
+      RoleName:
+        Fn::FindInMap: [IamNaming, Role, CloudformationLambdaStackRole]
       ManagedPolicyArns:
         - !Ref CloudformationLambdaPolicy
   CloudformationECSLambdaStackRole:
     Type: AWS::IAM::Role
+    Condition: IsUsEast1
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -609,12 +589,14 @@ Resources:
                 - "cloudformation.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      RoleName: HyperdriveCloudformationECSLambdaStackRole
+      RoleName:
+        Fn::FindInMap: [IamNaming, Role, CloudformationECSLambdaStackRole]
       ManagedPolicyArns:
         - !Ref CloudformationECSPolicy
         - !Ref CloudformationLambdaPolicy
   CloudformationECSPolicy:
     Type: AWS::IAM::ManagedPolicy
+    Condition: IsUsEast1
     Properties:
       PolicyDocument:
         Version: "2012-10-17"
@@ -649,9 +631,11 @@ Resources:
               - "ec2:DescribeNetworkInterfaces"
             Resource:
               - "*"
-      ManagedPolicyName: HyperdriveCloudformationECSPolicy
+      ManagedPolicyName:
+        Fn::FindInMap: [IamNaming, Policy, CloudformationECSPolicy]
   CloudformationLambdaPolicy:
     Type: AWS::IAM::ManagedPolicy
+    Condition: IsUsEast1
     Properties:
       PolicyDocument:
         Version: "2012-10-17"
@@ -695,11 +679,14 @@ Resources:
               - "ec2:DescribeNetworkInterfaces"
             Resource:
               - "*"
-      ManagedPolicyName: HyperdriveCloudformationLambdaPolicy
+      ManagedPolicyName:
+        Fn::FindInMap: [IamNaming, Policy, CloudformationLambdaPolicy]
   HyperdriveS3BucketPolicy:
     Type: AWS::IAM::ManagedPolicy
+    Condition: IsUsEast1
     Properties:
-      ManagedPolicyName: HyperdriveS3BucketPolicy
+      ManagedPolicyName:
+        Fn::FindInMap: [IamNaming, Policy, HyperdriveS3BucketPolicy]
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -722,8 +709,10 @@ Resources:
                       Fn::ImportValue: !Sub "${HyperdriveArtefactsStack}-ArtefactsBucketArn"
   CloudformationBuilderPolicy:
     Type: AWS::IAM::ManagedPolicy
+    Condition: IsUsEast1
     Properties:
-      ManagedPolicyName: HyperdriveCloudformationBuilderPolicy
+      ManagedPolicyName:
+        Fn::FindInMap: [IamNaming, Policy, CloudformationBuilderPolicy]
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -901,31 +890,59 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-RotateCfApiKeyVersion"
   CloudformationECSStackRole:
-    Value: !GetAtt CloudformationECSStackRole.Arn
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:role/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Role, CloudformationECSStackRole]
     Export:
       Name: !Sub "${AWS::StackName}-CloudformationECSStackRole"
   CloudformationLambdaStackRole:
-    Value: !GetAtt CloudformationLambdaStackRole.Arn
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:role/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Role, CloudformationLambdaStackRole]
     Export:
       Name: !Sub "${AWS::StackName}-CloudformationLambdaStackRole"
   CloudformationECSLambdaStackRole:
-    Value: !GetAtt CloudformationECSLambdaStackRole.Arn
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:role/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Role, CloudformationECSLambdaStackRole]
     Export:
       Name: !Sub "${AWS::StackName}-CloudformationECSLambdaStackRole"
   CloudformationECSPolicy:
-    Value: !Ref CloudformationECSPolicy
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:policy/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Policy, CloudformationECSPolicy]
     Export:
       Name: !Sub "${AWS::StackName}-CloudformationECSPolicy"
   CloudformationLambdaPolicy:
-    Value: !Ref CloudformationLambdaPolicy
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:policy/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Policy, CloudformationLambdaPolicy]
     Export:
       Name: !Sub "${AWS::StackName}-CloudformationLambdaPolicy"
   HyperdriveS3BucketPolicy:
-    Value: !Ref HyperdriveS3BucketPolicy
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:policy/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Policy, HyperdriveS3BucketPolicy]
     Export:
       Name: !Sub "${AWS::StackName}-HyperdriveS3BucketPolicy"
   CloudformationBuilderPolicy:
-    Value: !Ref CloudformationBuilderPolicy
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:policy/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Policy, CloudformationBuilderPolicy]
     Export:
       Name: !Sub "${AWS::StackName}-CloudformationBuilderPolicy"
   Version:
