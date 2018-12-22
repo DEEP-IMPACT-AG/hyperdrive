@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
-  HyperdriveCore:
+  HyperdriveLambda:
     Type: String
-    Default: HyperdriveCore
+    Default: HyperdriveLambda
   CertStack:
     Type: String
     Default: Cert
@@ -14,7 +14,7 @@ Resources:
       - email
       LambdaConfig:
         PreSignUp:
-          Fn::ImportValue: !Sub "${HyperdriveCore}-CogCond"
+          Fn::ImportValue: !Sub "${HyperdriveLambda}-CogCond"
       UserPoolName:
         Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
       UsernameAttributes:
@@ -23,7 +23,7 @@ Resources:
     Type: Custom::CognitoPoolDomain
     Properties:
       ServiceToken:
-        Fn::ImportValue: !Sub "${HyperdriveCore}-CognitoDomain"
+        Fn::ImportValue: !Sub "${HyperdriveLambda}-CognitoDomain"
       Domain:
         Fn::ImportValue: !Sub "${CertStack}-IdentityDomainName"
       UserPoolId: !Ref CognitoUserPool
@@ -45,7 +45,7 @@ Resources:
     Type: Custom::CognitoIdentityProvider
     Properties:
       ServiceToken:
-        Fn::ImportValue: !Sub "${HyperdriveCore}-CognitoIdentityProvider"
+        Fn::ImportValue: !Sub "${HyperdriveLambda}-CognitoIdentityProvider"
       UserPoolId: !Ref CognitoUserPool
       ProviderName: Google
       ProviderType: Google

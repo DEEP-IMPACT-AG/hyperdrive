@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
-  HyperdriveCore:
+  HyperdriveLambda:
     Type: String
-    Default: HyperdriveCore
+    Default: HyperdriveLambda
   HostedZoneName:
     Type: String
     Default: <hosted zone name>
@@ -45,7 +45,7 @@ Resources:
     Properties:
       ServiceToken:
         Fn::ImportValue:
-          !Sub ${HyperdriveCore}-DnsCertificate
+          !Sub ${HyperdriveLambda}-DnsCertificate
       DomainName: !Ref DomainName
     DependsOn:
     - CaaRecords
@@ -54,7 +54,7 @@ Resources:
     Properties:
       ServiceToken:
         Fn::ImportValue:
-          !Sub ${HyperdriveCore}-DnsCertificate
+          !Sub ${HyperdriveLambda}-DnsCertificate
       DomainName: !Ref IdentityDomainName
       Region: us-east-1
     DependsOn:

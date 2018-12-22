@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Test Cleaning
+Parameters:
+  HyperdriveLambda:
+    Type: String
+    Default: HyperdriveLambda
+Resources:
+  S3Cleanup:
+    Type: Custom::S3Cleanup
+    Properties:
+      ServiceToken:
+        Fn::ImportValue:
+          !Sub ${HyperdriveLambda}-S3Cleanup
+      Bucket: test.hyperdrive.sh
+      Prefix: test

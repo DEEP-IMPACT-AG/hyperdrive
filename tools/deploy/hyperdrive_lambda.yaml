@@ -7,7 +7,15 @@ Parameters:
   HyperdriveKmsKeyId:
     Type: String
 Resources:
-  # 1. Cloudformation custom resources
+  # 1. S3 Release Cleanup
+  S3ReleaseCleanup:
+    Type: Custom::S3Cleanup
+    Properties:
+      ServiceToken: !GetAtt S3CleanupFunction.Arn
+      ActiveOnlyOnStackDeletion: false
+      Bucket: !ImportValue HyperdriveCore-ArtifactsBucketName
+      Prefix: !Sub ".hyperdrive/${Version}"
+  # 2. Cloudformation custom resources
   CogCondRole:
     Type: AWS::IAM::Role
     Properties:

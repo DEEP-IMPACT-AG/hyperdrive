@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
-  HyperdriveCore:
+  HyperdriveLambda:
     Type: String
-    Default: HyperdriveCore
+    Default: HyperdriveLambda
   CertStack:
     Type: String
     Default: Cert
@@ -23,7 +23,7 @@ Resources:
     Properties:
       ServiceToken:
         Fn::ImportValue:
-          !Sub ${HyperdriveCore}-CognitoClientSettings
+          !Sub ${HyperdriveLambda}-CognitoClientSettings
       UserPoolId:
         Fn::ImportValue: !Sub "${UserPoolStack}-UserPoolId"
       UserPoolClientId: !Ref CognitoUserPoolClient

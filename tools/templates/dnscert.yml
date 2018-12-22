@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Template for DnsCertificate
 Parameters:
-  HyperdriveCore:
+  HyperdriveLambda:
     Type: String
-    Default: HyperdriveCore
+    Default: HyperdriveLambda
 Resources:
   CaaRecord:
     Type: AWS::Route53::RecordSet
@@ -19,7 +19,7 @@ Resources:
     Properties:
       ServiceToken:
         Fn::ImportValue:
-          !Sub ${HyperdriveCore}-DnsCertificateVersion
+          !Sub ${HyperdriveLambda}-DnsCertificateVersion
       DomainName: {{.DomainName}}
       Region: us-east-1
       SubjectAlternativeNames:

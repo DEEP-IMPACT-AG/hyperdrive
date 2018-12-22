@@ -5,8 +5,15 @@
 // or cleaning up a S3 bucket before deleting a S3 Bucket resource as the AWS S3 Bucket resource cannot
 // be deleted when it is not empty.
 //
-// The `s3cleanup` custom resource only deletes object when the stack itself is being deleted
-// It also safe to remove the resource from an existing stack.
+// With the flag "ActiveOnlyOnStackDeletion" (default true) is true, The `s3cleanup` custom resource only deletes objects
+// when the stack itself is being deleted. In that case, it also safe to remove the resource from an existing stack.
+//
+// When the flag "ActiveOnlyOnStackDeletion" is false, the `s3cleanup` custom resource deletes objects when it is deleted.
+// This is mostly useful when regularly replacing the `s3cleanup` custom resource when changing the prefix. An example
+// is the hyperdrive-lambda stack itself: the stack cleans up artifacts from previous version with this mechanism.
+// USE WITH CAUTION: to remove such `s3cleanup` custom resource from a stack without deleting objects, you have to set
+// is the flag "ActiveOnlyOnStackDeletion" to true.
+// Changing the bucket or the prefix will trigger a replacement and therefore a deletion of the resource.
 //
 // ## Syntax
 //
@@ -20,11 +27,24 @@
 //     ServiceToken:
 //       Fn::ImportValue:
 //         !Sub ${HyperdriveCore}-S3Cleanup
+//     ActiveOnlyOnStackDeletion: true
 //     Bucket: <bucket name>
 //     Prefix: <prefix>
 // ```
 //
 // ## Properties
+//
+// `ActiveOnlyOnStackDeletion`
+//
+// > Informs the resource when to delete objects from the s3 bucket. If the flag is true, then the resource deletes
+// > objects if and only if the stack is being deleted. If the flag is false, then the resource deletes objects if
+// > it is itself being deleted irrespective to the status of the stack.
+//
+// _Type_: Boolean
+//
+// _Required_: No
+//
+// _Update Requires_: no interruption
 //
 // `Bucket`
 //
@@ -35,7 +55,7 @@
 // >
 // > _Required_: Yes
 // >
-// > _Update Requires_: no interruption
+// > _Update Requires_: replacement
 //
 // `Prefix`
 //
@@ -45,13 +65,13 @@
 // >
 // > _Required_: No
 // >
-// > _Update Requires_: nothing (?)
+// > _Update Requires_: replacement
 package main
 
 import (
 	"context"
 
-	common "github.com/DEEP-IMPACT-AG/hyperdrive/common"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/common"
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
@@ -79,13 +99,17 @@ func main() {
 // We use the library [mapstructure](https://github.com/mitchellh/mapstructure) to
 // decode the generic map from the cloudformation event to the struct.
 type S3CleanupProperties struct {
-	Bucket, Prefix string
+	ActiveOnlyOnStackDeletion string
+	Bucket, Prefix            string
 }
 
 func s3CleanupProperties(input map[string]interface{}) (S3CleanupProperties, error) {
 	var properties S3CleanupProperties
 	if err := mapstructure.Decode(input, &properties); err != nil {
 		return properties, err
+	}
+	if properties.Bucket == "" {
+		return properties, errors.New("bucket name must be defined")
 	}
 	return properties, nil
 }
@@ -109,14 +133,11 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 	switch event.RequestType {
 	case cfn.RequestDelete:
 		if !common.IsFailurePhysicalResourceId(event.PhysicalResourceID) {
-			stacks, err := cf.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
-				StackName: &event.StackID,
-			}).Send()
+			delete, err := shouldDelete(event, properties);
 			if err != nil {
 				return event.PhysicalResourceID, nil, errors.Wrapf(err, "could not fetch the stack for the resource %s", event.PhysicalResourceID)
 			}
-			stackStatus := stacks.Stacks[0].StackStatus
-			if stackStatus == cloudformation.StackStatusDeleteInProgress {
+			if delete {
 				if err = deleteObjects(properties); err != nil {
 					return event.PhysicalResourceID, nil, errors.Wrapf(err, "could not delete the images of the repository %s", event.PhysicalResourceID)
 				}
@@ -124,12 +145,26 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 		}
 		return event.PhysicalResourceID, nil, nil
 	case cfn.RequestCreate:
-		return event.LogicalResourceID, nil, nil
+		return physicalResourceId(event, properties), nil, nil
 	case cfn.RequestUpdate:
-		return event.PhysicalResourceID, nil, nil
+		return physicalResourceId(event, properties), nil, nil
 	default:
 		return event.LogicalResourceID, nil, errors.Errorf("unknown request type %s", event.RequestType)
 	}
+}
+
+func shouldDelete(event cfn.Event, properties S3CleanupProperties) (bool, error) {
+	if properties.ActiveOnlyOnStackDeletion == "false" {
+		return true, nil
+	}
+	stacks, err := cf.DescribeStacksRequest(&cloudformation.DescribeStacksInput{
+		StackName: &event.StackID,
+	}).Send()
+	if err != nil {
+		return false, errors.Wrapf(err, "could not fetch the stack for the resource %s", event.PhysicalResourceID)
+	}
+	stackStatus := stacks.Stacks[0].StackStatus
+	return stackStatus == cloudformation.StackStatusDeleteInProgress, nil
 }
 
 func deleteObjects(properties S3CleanupProperties) error {
@@ -177,4 +212,8 @@ func deleteObjects(properties S3CleanupProperties) error {
 			return nil
 		}
 	}
+}
+
+func physicalResourceId(event cfn.Event, properties S3CleanupProperties) string {
+	return event.LogicalResourceID + ":" + properties.Bucket + ":" + properties.Prefix;
 }

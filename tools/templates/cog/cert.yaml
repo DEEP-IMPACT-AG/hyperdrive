@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
+  HyperdriveLambda:
+    Type: String
+    Default: HyperdriveLambda
   HyperdriveCore:
     Type: String
     Default: HyperdriveCore
-  HyperdriveArtefacts:
-    Type: String
-    Default: HyperdriveArtefacts
   TemplateKey:
     Type: String
     Default: "certtest/cert.yml"
@@ -19,14 +19,14 @@ Resources:
     Properties:
       ServiceToken:
         Fn::ImportValue:
-          !Sub ${HyperdriveCore}-S3Template
+          !Sub ${HyperdriveLambda}-S3Template
       S3Bucket:
-        Fn::ImportValue: !Sub "${HyperdriveArtefacts}-ArtefactsBucketName"
+        Fn::ImportValue: !Sub "${HyperdriveCore}-ArtefactsBucketName"
       S3Key: !Ref TemplateKey
       TemplateBody: |
         AWSTemplateFormatVersion: "2010-09-09"
         Parameters:
-          HyperdriveCore:
+          HyperdriveLambda:
             Type: String
           HostedZoneName:
             Type: String
@@ -63,7 +63,7 @@ Resources:
             Properties:
               ServiceToken:
                 Fn::ImportValue:
-                  !Sub ${HyperdriveCore}-DnsCertificate
+                  !Sub ${HyperdriveLambda}-DnsCertificate
               DomainName: !Ref DomainName
               SubjectAlternativeNames:
               - !Ref IdentityDomainName
@@ -105,7 +105,7 @@ Resources:
     Properties:
       TemplateURL: !Ref CertTemplate
       Parameters:
-        HyperdriveCore: !Ref HyperdriveCore
+        HyperdriveLambda: !Ref HyperdriveLambda
         HostedZoneName: !Ref HostedZoneName
         DomainName: !Ref DomainName
         IdentityDomainName: !Sub "identity.${DomainName}"
