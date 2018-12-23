@@ -478,6 +478,113 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt S3CleanupFunction.Arn
       Principal: cloudformation.amazonaws.com
+  SequenceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ssm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Sid: ssm
+                Action:
+                  - "ssm:DeleteParameter"
+                  - "ssm:DescribeParameters"
+                  - "ssm:GetParametersByPath"
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                  - "ssm:PutParameter"
+                Resource:
+                  - "arn:aws:ssm:*:*:parameter/hyperdrive/sequence/*"
+  SequenceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/seq
+      Description: Cloudformation Custom Resource for Sequences
+      Handler: seq
+      MemorySize: 128
+      Role: !GetAtt SequenceRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  SequenceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref SequenceFunction
+      RetentionInDays: 90
+  SequencePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt SequenceFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  SequenceValueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ssm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Sid: ssm
+                Action:
+                  - "ssm:DescribeParameters"
+                  - "ssm:GetParametersByPath"
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                  - "ssm:PutParameter"
+                Resource:
+                  - "arn:aws:ssm:*:*:parameter/hyperdrive/sequence/*"
+  SequenceValueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/seqval
+      Description: Cloudformation Custom Resource for Sequence Values
+      Handler: seqval
+      MemorySize: 128
+      Role: !GetAtt SequenceValueRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  SequenceValueLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref SequenceValueFunction
+      RetentionInDays: 90
+  SequenceValuePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt SequenceValueFunction.Arn
+      Principal: cloudformation.amazonaws.com
   RotateCfApiKeyRole:
     Type: AWS::IAM::Role
     Properties:
@@ -641,6 +748,30 @@ Outputs:
     Value: !Ref S3CleanupFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-S3CleanupVersion"
+  Sequence:
+    Value: !GetAtt SequenceFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-Sequence"
+  SequenceAlias:
+    Value: !Ref SequenceFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-SequenceAlias"
+  SequenceVersion:
+    Value: !Ref SequenceFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-SequenceVersion"
+  SequenceValue:
+    Value: !GetAtt SequenceValueFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SequenceValue"
+  SequenceValueAlias:
+    Value: !Ref SequenceValueFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-SequenceValueAlias"
+  SequenceValueVersion:
+    Value: !Ref SequenceValueFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-SequenceValueVersion"
   RotateCfApiKey:
     Value: !GetAtt RotateCfApiKeyFunction.Arn
     Export:

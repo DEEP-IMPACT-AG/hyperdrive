@@ -60,6 +60,18 @@ builds:
   - linux
   goarch:
   - amd64
+- main: cf/seq/seq.go
+  binary: seq/seq
+  goos:
+    - linux
+  goarch:
+    - amd64
+- main: cf/seqval/seqval.go
+  binary: seqval/seqval
+  goos:
+    - linux
+  goarch:
+    - amd64
 - main: service/rotatecfapikey/rotatecfapikey.go
   binary: rotatecfapikey/rotatecfapikey
   goos:

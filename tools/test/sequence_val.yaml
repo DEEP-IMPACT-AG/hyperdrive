@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  FirstValue:
+    Type: "Custom::SequenceValue"
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-SequenceValue
+      Sequence: !ImportValue SequenceTest-Sequence
+  SecondValue:
+    Type: "Custom::SequenceValue"
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-SequenceValue
+      Sequence: !ImportValue SequenceTest-Sequence
+Outputs:
+  FirstValue:
+    Value: !Ref FirstValue
+    Export:
+      Name: !Sub "${AWS::StackName}-FirstValue"
+  FirstValueValue:
+    Value: !GetAtt FirstValue.Value
+    Export:
+      Name: !Sub "${AWS::StackName}-FirstValueValue"
+  SecondValue:
+    Value: !Ref SecondValue
+    Export:
+      Name: !Sub "${AWS::StackName}-SecondValue"
+  SecondValueValue:
+    Value: !GetAtt SecondValue.Value
+    Export:
+      Name: !Sub "${AWS::StackName}-SecondValueValue"
