@@ -40,15 +40,39 @@ func domainProperties(input map[string]interface{}) (DomainProperties, error) {
 }
 
 func createDomain(event cfn.Event, properties DomainProperties) (string, map[string]interface{}, error) {
-	out, err := idp.CreateUserPoolDomainRequest(&cognitoidentityprovider.CreateUserPoolDomainInput{
-		Domain:             &properties.Domain,
-		UserPoolId:         &properties.UserPoolId,
-		CustomDomainConfig: &properties.CustomDomainConfig,
-	}).Send()
+	var out *cognitoidentityprovider.CreateUserPoolDomainOutput
+	var err error
+	if properties.CustomDomainConfig.CertificateArn == nil {
+		out, err = idp.CreateUserPoolDomainRequest(&cognitoidentityprovider.CreateUserPoolDomainInput{
+			Domain:     &properties.Domain,
+			UserPoolId: &properties.UserPoolId,
+		}).Send()
+	} else {
+		out, err = idp.CreateUserPoolDomainRequest(&cognitoidentityprovider.CreateUserPoolDomainInput{
+			Domain:             &properties.Domain,
+			UserPoolId:         &properties.UserPoolId,
+			CustomDomainConfig: &properties.CustomDomainConfig,
+		}).Send()
+	}
 	if err != nil {
 		return common.FailurePhysicalResourceId(event), nil, errors.Wrap(err, "Could not create the UserPoolDomain")
 	}
-	return properties.Domain, map[string]interface{}{"UserPoolId": properties.UserPoolId, "CloudFrontDomain": *out.CloudFrontDomain}, nil
+	var cloudFrontDomain string
+	var domain string
+	if out.CloudFrontDomain == nil {
+		cloudFrontDomain = ""
+		domain = properties.Domain + ".auth." + idp.Region + ".amazoncognito.com"
+	} else {
+		cloudFrontDomain = *out.CloudFrontDomain
+		domain = properties.Domain
+	}
+	return properties.Domain,
+		map[string]interface{}{
+			"UserPoolId":       properties.UserPoolId,
+			"CloudFrontDomain": cloudFrontDomain,
+			"Domain":           domain,
+		},
+		nil
 }
 
 func processEvent(ctx context.Context, event cfn.Event) (string, map[string]interface{}, error) {

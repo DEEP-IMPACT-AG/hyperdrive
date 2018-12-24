@@ -12,21 +12,14 @@ import (
 	"strings"
 )
 
-// CognitoEventUserPoolsPreSignupResponse contains the response portion of a PreSignup event
-type CognitoEventUserPoolsAllResponse struct {
-	AutoConfirmUser bool `json:"autoConfirmUser,omitempty"`
-	AutoVerifyEmail bool `json:"autoVerifyEmail,omitempty"`
-	AutoVerifyPhone bool `json:"autoVerifyPhone,omitempty"`
-}
-
-// CognitoEventUserPoolsPreSignupRequest contains the request portion of a PreSignup event
-type CognitoEventUserPoolsPreAll struct {
+// CognitoEventUserPoolsPreSignupRequest contains the request portion of a PreAuth event
+type CognitoEventUserPoolsPreAuth struct {
 	events.CognitoEventUserPoolsHeader
 	Request  events.CognitoEventUserPoolsPreSignupRequest `json:"request"`
-	Response CognitoEventUserPoolsAllResponse             `json:"response"`
+	Response map[string]interface{}
 }
 
-var zero = CognitoEventUserPoolsPreAll{}
+var zero = CognitoEventUserPoolsPreAuth{}
 
 func main() {
 	cfg, err := external.LoadDefaultAWSConfig()
@@ -43,8 +36,8 @@ type Settings struct {
 	Emails  []string `json:"emails"`
 }
 
-func processEvent(ssms *ssm.SSM) func(CognitoEventUserPoolsPreAll) (CognitoEventUserPoolsPreAll, error) {
-	return func(event CognitoEventUserPoolsPreAll) (CognitoEventUserPoolsPreAll, error) {
+func processEvent(ssms *ssm.SSM) func(CognitoEventUserPoolsPreAuth) (CognitoEventUserPoolsPreAuth, error) {
+	return func(event CognitoEventUserPoolsPreAuth) (CognitoEventUserPoolsPreAuth, error) {
 		fmt.Printf("%+v\n", event)
 		userPoolId := event.UserPoolID
 		clientId := event.CallerContext.ClientID
@@ -54,7 +47,7 @@ func processEvent(ssms *ssm.SSM) func(CognitoEventUserPoolsPreAll) (CognitoEvent
 			return zero, errors.Errorf("invalid email: %s", email)
 		}
 		domain := splitted[1]
-		parameterName := "/hyperdrive/cogcong/" + userPoolId + "/" + clientId
+		parameterName := "/hyperdrive/cog_cond_pre_auth/" + userPoolId + "/" + clientId
 		parameter, err := ssms.GetParameterRequest(&ssm.GetParameterInput{
 			Name: &parameterName,
 		}).Send()

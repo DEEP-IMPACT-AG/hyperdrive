@@ -16,7 +16,7 @@ Resources:
       Bucket: !ImportValue HyperdriveCore-ArtifactsBucketName
       Prefix: !Sub ".hyperdrive/${Version}"
   # 2. Cloudformation custom resources
-  CogCondRole:
+  CogCondPreAuthRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -42,28 +42,28 @@ Resources:
                   - "ssm:GetParameter"
                   - "ssm:GetParameters"
                 Resource:
-                  - "arn:aws:ssm:*:*:parameter/hyperdrive/cogcong/*"
-  CogCondFunction:
+                  - "arn:aws:ssm:*:*:parameter/hyperdrive/cog_cond_pre_auth/*"
+  CogCondPreAuthFunction:
     Type: AWS::Serverless::Function
     Properties:
       AutoPublishAlias: live
-      CodeUri: ../../dist/linux_amd64/cogcond
+      CodeUri: ../../dist/linux_amd64/cog_cond_pre_auth
       Runtime: go1.x
-      Handler: cogcond
-      Role: !GetAtt CogCondRole.Arn
-  CogCondLogs:
+      Handler: cog_cond_pre_auth
+      Role: !GetAtt CogCondPreAuthRole.Arn
+  CogCondPreAuthLogs:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName:
         Fn::Sub:
           - "/aws/lambda/${LambdaName}"
-          - LambdaName: !Ref CogCondFunction
+          - LambdaName: !Ref CogCondPreAuthFunction
       RetentionInDays: 90
-  CogCondPermission:
+  CogCondPreAuthPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt CogCondFunction.Arn
+      FunctionName: !GetAtt CogCondPreAuthFunction.Arn
       Principal: cognito-idp.amazonaws.com
   CfApiKeyRole:
     Type: AWS::IAM::Role
@@ -118,6 +118,60 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt CfApiKeyFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  CogCondPreAuthSettingsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ssm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Sid: ssm
+                Action:
+                  - "ssm:DeleteParameter"
+                  - "ssm:DescribeParameters"
+                  - "ssm:GetParametersByPath"
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                  - "ssm:PutParameter"
+                Resource:
+                  - "arn:aws:ssm:*:*:parameter/hyperdrive/cog_cond_pre_auth/*"
+  CogCondPreAuthSettingsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/seq
+      Description: Cloudformation Custom Resource for CogCondPreAuthSettings
+      Handler: seq
+      MemorySize: 128
+      Role: !GetAtt CogCondPreAuthSettingsRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  CogCondPreAuthSettingsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref CogCondPreAuthSettingsFunction
+      RetentionInDays: 90
+  CogCondPreAuthSettingsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CogCondPreAuthSettingsFunction.Arn
       Principal: cloudformation.amazonaws.com
   CognitoClientSettingsRole:
     Type: AWS::IAM::Role
@@ -331,6 +385,44 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt DnsCertificateFunction.Arn
+      Principal: cloudformation.amazonaws.com
+  DummyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  DummyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/dummy
+      Description: Dummy Resource for information only stacks
+      Handler: dummy
+      MemorySize: 128
+      Role: !GetAtt DummyRole.Arn
+      Runtime: go1.x
+      Timeout: 300
+  DummyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref DummyFunction
+      RetentionInDays: 90
+  DummyPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt DummyFunction.Arn
       Principal: cloudformation.amazonaws.com
   EcrCleanupRole:
     Type: AWS::IAM::Role
@@ -640,18 +732,18 @@ Resources:
       FunctionName: !GetAtt RotateCfApiKeyFunction.Arn
       Principal: events.amazonaws.com
 Outputs:
-  CogCond:
-    Value: !GetAtt CogCondFunction.Arn
+  CogCondPreAuth:
+    Value: !GetAtt CogCondPreAuthFunction.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-CogCond"
-  CogCondAlias:
-    Value: !Ref CogCondFunction.Alias
+      Name: !Sub "${AWS::StackName}-CogCondPreAuth"
+  CogCondPreAuthAlias:
+    Value: !Ref CogCondPreAuthFunction.Alias
     Export:
-      Name: !Sub "${AWS::StackName}-CogCondAlias"
-  CogCondVersion:
-    Value: !Ref CogCondFunction.Version
+      Name: !Sub "${AWS::StackName}-CogCondPreAuthAlias"
+  CogCondPreAuthVersion:
+    Value: !Ref CogCondPreAuthFunction.Version
     Export:
-      Name: !Sub "${AWS::StackName}-CogCondVersion"
+      Name: !Sub "${AWS::StackName}-CogCondPreAuthVersion"
   CfApiKey:
     Value: !GetAtt CfApiKeyFunction.Arn
     Export:
@@ -664,6 +756,18 @@ Outputs:
     Value: !Ref CfApiKeyFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-CfApiKeyVersion"
+  CogCondPreAuthSettings:
+    Value: !GetAtt CogCondPreAuthSettingsFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CogCondPreAuthSettings"
+  CogCondPreAuthSettingsAlias:
+    Value: !Ref CogCondPreAuthSettingsFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-CogCondPreAuthSettingsAlias"
+  CogCondPreAuthSettingsVersion:
+    Value: !Ref CogCondPreAuthSettingsFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-CogCondPreAuthSettingsVersion"
   CognitoClientSettings:
     Value: !GetAtt CognitoClientSettingsFunction.Arn
     Export:
@@ -712,6 +816,18 @@ Outputs:
     Value: !Ref DnsCertificateFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-DnsCertificateVersion"
+  Dummy:
+    Value: !GetAtt DummyFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-Dummy"
+  DummyAlias:
+    Value: !Ref DummyFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-DummyAlias"
+  DummyVersion:
+    Value: !Ref DummyFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-DummyVersion"
   EcrCleanup:
     Value: !GetAtt EcrCleanupFunction.Arn
     Export:

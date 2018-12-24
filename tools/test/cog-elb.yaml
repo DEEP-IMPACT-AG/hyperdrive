@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  UserPoolArn:
+    Type: String
+  UserPoolClientId:
+    Type: String
+  UserPoolDomain:
+    Type: String
+Resources:
+  Certificate:
+    Type: "Custom::DnsCertificate"
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-DnsCertificate
+      DomainName: {{.data.subdomain}}.{{.data.domain}}
+  CertDnsRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: {{.data.domain}}.
+      RecordSets:
+        - Name:
+            Fn::GetAtt: [Certificate, "{{.data.subdomain}}.{{.data.domain}}-RecordName"]
+          ResourceRecords:
+            - Fn::GetAtt: [Certificate, "{{.data.subdomain}}.{{.data.domain}}-RecordValue"]
+          TTL: 300
+          Type: CNAME
+        - Name: {{.data.subdomain}}.{{.data.domain}}.
+          ResourceRecords:
+            - "0 issue \"amazon.com\""
+          TTL: 300
+          Type: CAA
+  CertificateCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Count: 1
+      Handle: !Ref CertificateConditionHandle
+      Timeout: 3600
+  CertificateConditionHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: sg for public access to the elb
+      SecurityGroupEgress:
+        - CidrIp: '0.0.0.0/0'
+          IpProtocol: -1
+          FromPort: 0
+          ToPort: 65535
+      SecurityGroupIngress:
+        - CidrIp: '0.0.0.0/0'
+          Description: http
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+        - CidrIpv6: '::/0'
+          Description: http
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: '0.0.0.0/0'
+          Description: https
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+        - CidrIpv6: '::/0'
+          Description: https
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+      VpcId: !ImportValue DefaultVpc-Vpc
+  InternalSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: sg for internal communication
+      SecurityGroupEgress:
+        - CidrIp: '0.0.0.0/0'
+          IpProtocol: -1
+          FromPort: 0
+          ToPort: 65535
+      VpcId: !ImportValue DefaultVpc-Vpc
+  SelfReferenceInternalSecurityGroup:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Self
+      GroupId: !Ref InternalSecurityGroup
+      SourceSecurityGroupId: !Ref InternalSecurityGroup
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 65535
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - !ImportValue DefaultVpc-SubnetAPublic
+        - !ImportValue DefaultVpc-SubnetBPublic
+        - !ImportValue DefaultVpc-SubnetCPublic
+      SecurityGroups:
+        - !Ref PublicSecurityGroup
+        - !Ref InternalSecurityGroup
+      Type: application
+  ElbDnsRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: {{.data.domain}}.
+      RecordSets:
+        - Name: {{.data.subdomain}}.{{.data.domain}}.
+          AliasTarget:
+            DNSName: !GetAtt LoadBalancer.DNSName
+            HostedZoneId: !GetAtt LoadBalancer.CanonicalHostedZoneID
+          Type: A
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - RedirectConfig:
+            Host: "#{host}"
+            Path: "/#{path}"
+            Port: 443
+            Protocol: HTTPS
+            StatusCode: HTTP_301
+          Type: redirect
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+        - CertificateArn: !Ref Certificate
+      DefaultActions:
+        - AuthenticateCognitoConfig:
+            Scope: "openid email profile"
+            UserPoolArn: !Ref UserPoolArn
+            UserPoolClientId: !Ref UserPoolClientId
+            UserPoolDomain: !Ref UserPoolDomain
+          Type: authenticate-cognito
+          Order: 1
+        - FixedResponseConfig:
+            ContentType: text/html
+            MessageBody: |
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="UTF-8">
+                <title>Cog ELB</title>
+              </head>
+              <body>
+                Cog ELB
+              </body>
+              </html>
+            StatusCode: 200
+          Type: fixed-response
+          Order: 2
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+    DependsOn:
+      - CertificateCondition

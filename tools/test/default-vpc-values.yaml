@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  Vpc:
+    Type: String
+  SubnetAPublic:
+    Type: String
+  SubnetBPublic:
+    Type: String
+  SubnetCPublic:
+    Type: String
+Resources:
+  Dummy:
+    Type: "Custom::Dummy"
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-Dummy
+Outputs:
+  Vpc:
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub ${AWS::StackName}-Vpc
+  SubnetAPublic:
+    Value: !Ref SubnetAPublic
+    Export:
+      Name: !Sub ${AWS::StackName}-SubnetAPublic
+  SubnetBPublic:
+    Value: !Ref SubnetBPublic
+    Export:
+      Name: !Sub ${AWS::StackName}-SubnetBPublic
+  SubnetCPublic:
+    Value: !Ref SubnetCPublic
+    Export:
+      Name: !Sub ${AWS::StackName}-SubnetCPublic
+  SubnetsPublic:
+    Value: !Join [',', [!Ref SubnetAPublic, !Ref SubnetBPublic, !Ref SubnetCPublic]]
+    Export:
+      Name: !Sub ${AWS::StackName}-SubnetsPublic

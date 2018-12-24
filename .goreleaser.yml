@@ -3,81 +3,93 @@ project_name: hyperdrive
 
 before:
   hooks:
-  - go mod download
+    - go mod download
 
 builds:
-- main: auth/cogcond/cogcond.go
-  binary: cogcond/cogcond
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/cfapikey/cfapikey.go
-  binary: cfapikey/cfapikey
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/cogclientset/cogclientset.go
-  binary: cogclientset/cogclientset
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/cogdomain/cogdomain.go
-  binary: cogdomain/cogdomain
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/cogidp/cogidp.go
-  binary: cogidp/cogidp
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/dnscert/dnscert.go
-  binary: dnscert/dnscert
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/ecrcleanup/ecrcleanup.go
-  binary: ecrcleanup/ecrcleanup
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/loggrp/loggrp.go
-  binary: loggrp/loggrp
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/s3cleanup/s3cleanup.go
-  binary: s3cleanup/s3cleanup
-  goos:
-  - linux
-  goarch:
-  - amd64
-- main: cf/seq/seq.go
-  binary: seq/seq
-  goos:
-    - linux
-  goarch:
-    - amd64
-- main: cf/seqval/seqval.go
-  binary: seqval/seqval
-  goos:
-    - linux
-  goarch:
-    - amd64
-- main: service/rotatecfapikey/rotatecfapikey.go
-  binary: rotatecfapikey/rotatecfapikey
-  goos:
-  - linux
-  goarch:
-  - amd64
+  - main: auth/cog_cond_pre_auth/cog_cond_pre_auth.go
+    binary: cog_cond_pre_auth/cog_cond_pre_auth
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/cfapikey/cfapikey.go
+    binary: cfapikey/cfapikey
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/cog_cond_pre_auth_settings/cog_cond_pre_auth_settings.go
+    binary: cog_cond_pre_auth_settings/cog_cond_pre_auth_settings
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/cogclientset/cogclientset.go
+    binary: cogclientset/cogclientset
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/cogdomain/cogdomain.go
+    binary: cogdomain/cogdomain
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/cogidp/cogidp.go
+    binary: cogidp/cogidp
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/dnscert/dnscert.go
+    binary: dnscert/dnscert
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/dummy/dummy.go
+    binary: dummy/dummy
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/ecrcleanup/ecrcleanup.go
+    binary: ecrcleanup/ecrcleanup
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/loggrp/loggrp.go
+    binary: loggrp/loggrp
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/s3cleanup/s3cleanup.go
+    binary: s3cleanup/s3cleanup
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/seq/seq.go
+    binary: seq/seq
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: cf/seqval/seqval.go
+    binary: seqval/seqval
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: service/rotatecfapikey/rotatecfapikey.go
+    binary: rotatecfapikey/rotatecfapikey
+    goos:
+      - linux
+    goarch:
+      - amd64
 
 release:
   disable: true

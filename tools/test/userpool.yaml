@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AutoVerifiedAttributes:
+        - email
+      LambdaConfig:
+        PreAuthentication: !ImportValue HyperdriveLambda-CogCondPreAuth
+      UserPoolName: Hyperdrive
+      UsernameAttributes:
+        - email
+  CognitoPoolDomain:
+    Type: Custom::CognitoPoolDomain
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-CognitoDomain
+      Domain: "hyperdrive-cog-test4"
+      UserPoolId: !Ref CognitoUserPool
+Outputs:
+  CognitoUserPoolArn:
+    Value: !GetAtt CognitoUserPool.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoUserPoolArn"
+  CognitoPoolDomain:
+    Value: !GetAtt CognitoPoolDomain.Domain
+    Export:
+      Name: !Sub "${AWS::StackName}-CognitoPoolDomain"
