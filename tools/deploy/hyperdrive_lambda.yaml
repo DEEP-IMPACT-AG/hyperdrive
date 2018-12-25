@@ -152,9 +152,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       AutoPublishAlias: live
-      CodeUri: ../../dist/linux_amd64/seq
+      CodeUri: ../../dist/linux_amd64/cog_cond_pre_auth_settings
       Description: Cloudformation Custom Resource for CogCondPreAuthSettings
-      Handler: seq
+      Handler: cog_cond_pre_auth_settings
       MemorySize: 128
       Role: !GetAtt CogCondPreAuthSettingsRole.Arn
       Runtime: go1.x

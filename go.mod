@@ -1,6 +1,7 @@
 module github.com/DEEP-IMPACT-AG/hyperdrive
 
 require (
+	github.com/alecthomas/participle v0.2.0
 	github.com/apex/gateway v1.1.1
 	github.com/aws/aws-lambda-go v1.7.0
 	github.com/aws/aws-sdk-go-v2 v2.0.0-preview.5+incompatible

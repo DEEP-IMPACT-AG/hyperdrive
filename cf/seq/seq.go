@@ -34,17 +34,19 @@
 //
 // _Update Requires_: replacement
 //
-// `InitialValue`
+// `Expression`
 //
-// > The initial value for the sequence.
+// > The arithmetic expression to compute the sequence: standard operations + variable x for the current value of the
+// > sequence.
+// > WARNING: changing the expression is dangerous as the sequence could retake previously issued values.
 // >
-// > _Type_: Integer
+// > _Type_: String
 // >
-// > _Default_: 0
+// > _Default_: x
 // >
 // > _Required_: No
 // >
-// > _Update Requires_: not allowed
+// > _Update Requires_: no interruption
 //
 // ## Return Values
 //
@@ -62,7 +64,6 @@ import (
 	awsssm "github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
-	"strconv"
 	"strings"
 )
 
@@ -82,7 +83,7 @@ func main() {
 // We use the library [mapstructure](https://github.com/mitchellh/mapstructure) to
 // decode the generic map from the cloudformation event to the struct.
 type SequenceProperties struct {
-	SequenceName, InitialValue string
+	SequenceName, Expression string
 }
 
 func sequenceProperties(input map[string]interface{}) (SequenceProperties, error) {
@@ -93,12 +94,11 @@ func sequenceProperties(input map[string]interface{}) (SequenceProperties, error
 	if !strings.HasPrefix(properties.SequenceName, "/") {
 		return properties, errors.Errorf("name %s must start with an /", properties.SequenceName)
 	}
-	if properties.InitialValue == "" {
-		properties.InitialValue = "0"
+	if properties.Expression == "" {
+		properties.Expression = "x"
 	}
-	_, err := strconv.ParseUint(properties.InitialValue, 10, 64)
-	if err != nil {
-		return properties, errors.Wrapf(err, "InitialValue must be a uint64: %s", properties.InitialValue)
+	if _, err := common.Eval(properties.Expression, 1); err != nil {
+		return properties, err
 	}
 	return properties, nil
 }
@@ -120,29 +120,22 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 		}
 		return event.PhysicalResourceID, nil, nil
 	case cfn.RequestCreate:
-		return createSequence(ssm, properties)
+		return putSequence(ssm, properties)
 	case cfn.RequestUpdate:
-		oldProperties, err := sequenceProperties(event.OldResourceProperties)
-		if err != nil {
-			return event.PhysicalResourceID, nil, err
-		}
-		if oldProperties.SequenceName == properties.SequenceName {
-			return event.PhysicalResourceID, nil, errors.Errorf("cannot change initial value for sequence %s", properties.SequenceName)
-		}
-		return createSequence(ssm, properties);
+		return putSequence(ssm, properties);
 	default:
 		return "", nil, errors.Errorf("unknown request type %s", event.RequestType)
 	}
 }
 
-func createSequence(ssm *awsssm.SSM, properties SequenceProperties) (string, map[string]interface{}, error) {
-	allowedPattern := "^\\d+|lock$"
+func putSequence(ssm *awsssm.SSM, properties SequenceProperties) (string, map[string]interface{}, error) {
+	overwrite := true
 	parameterName := "/hyperdrive/sequence" + properties.SequenceName
 	_, err := ssm.PutParameterRequest(&awsssm.PutParameterInput{
-		AllowedPattern: &allowedPattern,
-		Name: &parameterName,
-		Type: awsssm.ParameterTypeString,
-		Value: &properties.InitialValue,
+		Name:      &parameterName,
+		Type:      awsssm.ParameterTypeString,
+		Value:     &properties.Expression,
+		Overwrite: &overwrite,
 	}).Send();
 	if err != nil {
 		return "", nil, errors.Wrapf(err, "could not put the parameter %s", parameterName)

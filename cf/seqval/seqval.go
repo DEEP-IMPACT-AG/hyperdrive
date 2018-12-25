@@ -39,6 +39,7 @@ package main
 
 import (
 	"context"
+	"github.com/DEEP-IMPACT-AG/hyperdrive/common"
 	"github.com/aws/aws-lambda-go/cfn"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws/external"
@@ -46,7 +47,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"strconv"
-	"time"
 )
 
 var ssm *awsssm.SSM
@@ -97,50 +97,32 @@ func processEvent(ctx context.Context, event cfn.Event) (string, map[string]inte
 }
 
 func nextValue(ssm *awsssm.SSM, event cfn.Event, properties SequenceValueProperties) (string, map[string]interface{}, error) {
-	lockValue := "lock"
 	overwrite := true
 	pname := properties.Sequence
-	for i := 0; i < 3600; i++ {
-		param, err := ssm.GetParameterRequest(&awsssm.GetParameterInput{
-			Name: &pname,
-		}).Send()
-		if err != nil {
-			return event.PhysicalResourceID, nil, errors.Wrapf(err, "unable to get the parameter %s", pname)
-		}
-		valueText := *param.Parameter.Value;
-		if valueText != "lock" {
-			lockedParam, err := ssm.PutParameterRequest(&awsssm.PutParameterInput{
-				Name: &pname,
-				Value: &lockValue,
-				Type: awsssm.ParameterTypeString,
-				Overwrite: &overwrite,
-			}).Send()
-			if err != nil {
-				return event.PhysicalResourceID, nil, errors.Wrapf(err, "unable to lock the parameter %s", pname)
-			}
-			if *lockedParam.Version == *param.Parameter.Version + 1 {
-				value, err := strconv.ParseUint(valueText, 10, 64)
-				if err != nil {
-					return event.PhysicalResourceID, nil, errors.Wrapf(err, "value must be a uint64: %s", valueText)
-				}
-				nextValue := value + 1
-				nextValueText := strconv.FormatUint(nextValue, 10);
-				_, err = ssm.PutParameterRequest(&awsssm.PutParameterInput{
-					Name: &pname,
-					Value: &nextValueText,
-					Type: awsssm.ParameterTypeString,
-					Overwrite: &overwrite,
-				}).Send()
-				if err != nil {
-					return event.PhysicalResourceID, nil, errors.Wrapf(err, "unable to set the parameter %s with the next value", pname)
-				}
-				physicalId := event.LogicalResourceID + ":" + properties.Sequence
-				data := make(map[string]interface{}, 1)
-				data["Value"] = valueText
-				return physicalId, data, nil
-			}
-		}
-		time.Sleep(time.Second)
+	param, err := ssm.GetParameterRequest(&awsssm.GetParameterInput{
+		Name: &pname,
+	}).Send()
+	if err != nil {
+		return event.PhysicalResourceID, nil, errors.Wrapf(err, "unable to get the parameter %s", pname)
 	}
-	return event.PhysicalResourceID, nil, errors.Errorf("unable to draw a value from the parameter: %s", pname)
+	expression := *param.Parameter.Value;
+	next, err := ssm.PutParameterRequest(&awsssm.PutParameterInput{
+		Name:      &pname,
+		Value:     &expression,
+		Type:      awsssm.ParameterTypeString,
+		Overwrite: &overwrite,
+	}).Send()
+	if err != nil {
+		return event.PhysicalResourceID, nil, errors.Wrapf(err, "unable to put the parameter %s", pname)
+	}
+	// The initial version is 1 (when the sequence is created, it means that the first real value will be 2. As we
+	// want to start with 1, we decrement the value obtain from incrementing the parameter.
+	value, err := common.Eval(expression, *next.Version-1)
+	if err != nil {
+		return event.PhysicalResourceID, nil, err
+	}
+	valueText := strconv.FormatInt(value, 10);
+	data := make(map[string]interface{}, 1)
+	data["Value"] = valueText
+	return event.PhysicalResourceID, data, nil
 }
