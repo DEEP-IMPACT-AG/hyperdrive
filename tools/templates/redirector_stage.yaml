@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  StageName:
+    Type: String
+  RedirectLocation:
+    Type: String
+Resources:
+  Stage:
+    Type: "AWS::ApiGateway::Stage"
+    Properties:
+      DeploymentId: !ImportValue HyperdriveRedirector-Deployment
+      RestApiId: !ImportValue HyperdriveRedirector-Api
+      StageName: !Ref StageName
+      Variables:
+        redirectLocation: !Ref RedirectLocation
+  Certificate:
+    Type: "Custom::DnsCertificate"
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-DnsCertificate
+      DomainName: {{.data.subdomain}}.{{.data.domain}}
+      Region: us-east-1
+  CertDnsRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: {{.data.domain}}.
+      RecordSets:
+        - Name:
+            Fn::GetAtt: [Certificate, "{{.data.subdomain}}.{{.data.domain}}-RecordName"]
+          ResourceRecords:
+            - Fn::GetAtt: [Certificate, "{{.data.subdomain}}.{{.data.domain}}-RecordValue"]
+          TTL: 300
+          Type: CNAME
+        - Name: {{.data.subdomain}}.{{.data.domain}}.
+          ResourceRecords:
+            - "0 issue \"amazon.com\""
+          TTL: 300
+          Type: CAA
+  CertificateCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Count: 1
+      Handle: !Ref CertificateConditionHandle
+      Timeout: 3600
+  CertificateConditionHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+  DomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      CertificateArn: !Ref Certificate
+      DomainName: {{.data.subdomain}}.{{.data.domain}}
+      EndpointConfiguration:
+        Types:
+          - EDGE
+  AliasDnsRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: {{.data.domain}}.
+      RecordSets:
+        - Name: {{.data.subdomain}}.{{.data.domain}}.
+          AliasTarget:
+            DNSName: !GetAtt DomainName.DistributionDomainName
+            HostedZoneId: !GetAtt DomainName.DistributionHostedZoneId
+          Type: A
+  PathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      DomainName: !Ref DomainName
+      RestApiId: !ImportValue HyperdriveRedirector-Api
+      Stage: !Ref Stage
