@@ -52,6 +52,8 @@ Resources:
       EndpointConfiguration:
         Types:
           - EDGE
+    DependsOn:
+      - CertificateCondition
   AliasDnsRecords:
     Type: AWS::Route53::RecordSetGroup
     Properties:
