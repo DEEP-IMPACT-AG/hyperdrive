@@ -1,18 +1,42 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Parameters:
-  StageName:
-    Type: String
-  RedirectLocation:
-    Type: String
+Transform: AWS::Serverless-2016-10-31
 Resources:
-  Stage:
-    Type: "AWS::ApiGateway::Stage"
+  RedirectorApi:
+    Type: "AWS::Serverless::Api"
     Properties:
-      DeploymentId: !ImportValue HyperdriveRedirector-Deployment
-      RestApiId: !ImportValue HyperdriveRedirector-Api
-      StageName: !Ref StageName
-      Variables:
-        redirectLocation: !Ref RedirectLocation
+      Name: "HyperdriveRedirector-{{.data.stageName}}"
+      StageName: "{{.data.stageName}}"
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          version: "1.0"
+        schemes:
+          - "https"
+        paths:
+          /:
+            get:
+              consumes:
+                - "application/json"
+              responses:
+                "301":
+                  description: "301 response"
+                  headers:
+                    Location:
+                      type: "string"
+              x-amazon-apigateway-integration:
+                responses:
+                  "301":
+                    statusCode: "301"
+                    responseParameters:
+                      method.response.header.Location: "{{.data.redirectLocation}}"
+                requestTemplates:
+                  application/json: "{\"statusCode\": 301}"
+                passthroughBehavior: "when_no_match"
+                type: "mock"
+        definitions:
+          Empty:
+            type: "object"
+            title: "Empty Schema"
   Certificate:
     Type: "Custom::DnsCertificate"
     Properties:
@@ -69,4 +93,5 @@ Resources:
     Properties:
       DomainName: !Ref DomainName
       RestApiId: !ImportValue HyperdriveRedirector-Api
-      Stage: !Ref Stage
+      Stage: "{{.data.stageName}}"
+
