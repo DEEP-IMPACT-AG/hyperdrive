@@ -123,6 +123,7 @@ func nextValue(ssm *awsssm.SSM, event cfn.Event, properties SequenceValuePropert
 	}
 	valueText := strconv.FormatInt(value, 10);
 	data := make(map[string]interface{}, 1)
-	data["Value"] = valueText
+	data["ValueText"] = valueText
+	data["Value"] = value
 	return event.PhysicalResourceID, data, nil
 }
