@@ -12,8 +12,8 @@
 // to your cloudformation template (yaml notation, json is similar)
 //
 // ```yaml
-// MySequence:
-//   Type: Custom::SequenceGenerator
+// UserPoolPreAuthSettings:
+//   Type: Custom::CogCondPreAuthSettings
 //   Properties:
 //     ServiceToken:
 //       Fn::ImportValue:
