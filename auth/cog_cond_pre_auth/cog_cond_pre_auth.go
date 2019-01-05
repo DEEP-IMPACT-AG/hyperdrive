@@ -16,7 +16,7 @@ import (
 type CognitoEventUserPoolsPreAuth struct {
 	events.CognitoEventUserPoolsHeader
 	Request  events.CognitoEventUserPoolsPreSignupRequest `json:"request"`
-	Response map[string]interface{}
+	Response map[string]interface{}                       `json:"response"`
 }
 
 var zero = CognitoEventUserPoolsPreAuth{}
