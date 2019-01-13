@@ -18,3 +18,4 @@
 /.idea
 /tools/hyperdrive/hyperdrive
 /codecommit/pipelineTrigger/pipelineTrigger
+/tools/test/packaged.yaml

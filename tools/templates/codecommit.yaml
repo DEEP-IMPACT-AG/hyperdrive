@@ -1,0 +1,234 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A template for a project with a code commit repository
+Parameters:
+  Project:
+    Type: String
+Resources:
+  Repository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Ref Project
+      Triggers:
+        - CustomData: !Sub |
+            { "project": "${Project}" }
+          DestinationArn: !ImportValue HyperdriveLambdaTest-Function
+          Events:
+            - updateReference
+            - createReference
+          Name: pipeline
+  CheckoutCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: codebuild
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${Project}Checkout"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${Project}Checkout:*"
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                Resource:
+                  - Fn::Sub:
+                      - "${Bucket}/*"
+                      - Bucket: !ImportValue HyperdriveCore-CodePipelineBucketArn
+  CheckoutCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: "aws/codebuild/ubuntu-base:14.04"
+        Type: LINUX_CONTAINER
+      Name: !Sub "${Project}Checkout"
+      ServiceRole: !GetAtt CheckoutCodeBuildRole.Arn
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 30
+  CheckoutCodeBuildLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/codebuild/${ProjectName}"
+          - ProjectName: !Ref CheckoutCodeBuildProject
+      RetentionInDays: 90
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: pipeline
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "iam:PassRole"
+                Resource:
+                  - "*"
+                Condition:
+                  StringEqualsIfExists:
+                    "iam:PassedToService":
+                      - cloudformation.amazonaws.com
+                      - ecs-tasks.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - "codedeploy:CreateDeployment"
+                  - "codedeploy:GetApplication"
+                  - "codedeploy:GetApplicationRevision"
+                  - "codedeploy:GetDeployment"
+                  - "codedeploy:GetDeploymentConfig"
+                  - "codedeploy:RegisterApplicationRevision"
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - "elasticbeanstalk:*"
+                  - "ec2:*"
+                  - "elasticloadbalancing:*"
+                  - "autoscaling:*"
+                  - "cloudwatch:*"
+                  - "s3:*"
+                  - "sns:*"
+                  - "cloudformation:*"
+                  - "rds:*"
+                  - "sqs:*"
+                  - "ecs:*"
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                  - "lambda:ListFunctions"
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - "codebuild:BatchGetBuilds"
+                  - "codebuild:StartBuild"
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Action:
+                  - "ecr:DescribeImages"
+                Resource:
+                  - "*"
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !ImportValue HyperdriveCore-CodePipelineBucketName
+        Type: S3
+      Name: !Ref Project
+      RoleArn: !GetAtt PipelineRole.Arn
+      Stages:
+        - Name: S3Source
+          Actions:
+            - Name: S3Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !ImportValue HyperdriveCore-EventsBucketName
+                S3ObjectKey: !Sub "${Project}/trigger/release.zip"
+              OutputArtifacts:
+                - Name: SourceArtifact
+        - Name: Checkout
+          Actions:
+            - Name: Checkout
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref CheckoutCodeBuildProject
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: CheckoutArtifact
+  S3EventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: events.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: pipeline
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codepipeline:StartPipelineExecution"
+                Resource:
+                  - !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}"
+  S3EventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Trigger the pipeline on S3 change
+      EventPattern:
+        Fn::Sub:
+          - |
+            {
+              "source": [
+                "aws.s3"
+              ],
+              "detail-type": [
+                "AWS API Call via CloudTrail"
+              ],
+              "detail": {
+                "eventSource": [
+                  "s3.amazonaws.com"
+                ],
+                "eventName": [
+                  "PutObject",
+                  "CompleteMultipartUpload"
+                ],
+                "resources": {
+                  "ARN": [
+                    "arn:aws:s3:::${Bucket}/${Project}/trigger/release.zip"
+                  ]
+                }
+              }
+            }
+          - Bucket: !ImportValue HyperdriveCore-EventsBucketName
+      State: ENABLED
+      Targets:
+        - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${Pipeline}"
+          Id: pipeline
+          RoleArn: !GetAtt S3EventRole.Arn

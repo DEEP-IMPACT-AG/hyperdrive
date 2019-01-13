@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: To just install one single resource.
+Parameters:
+  HyperdriveKmsKeyId:
+    Type: String
+Resources:
+  # 1. S3 Release Cleanup
+  S3ReleaseCleanup:
+    Type: Custom::S3Cleanup
+    Properties:
+      ServiceToken: !ImportValue HyperdriveLambda-S3Cleanup
+      ActiveOnlyOnStackDeletion: false
+      Bucket: !ImportValue HyperdriveCore-ArtifactsBucketName
+      Prefix: !Sub ".hyperdrive-test"
+  # 2. function custom resources
+  FunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ssm
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Sid: ssm
+                Action:
+                  - "ssm:DescribeParameters"
+                  - "ssm:GetParametersByPath"
+                  - "ssm:GetParameter"
+                  - "ssm:GetParameters"
+                Resource:
+                  - "arn:aws:ssm:*:*:parameter/hyperdrive/cog_cond_pre_auth/*"
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../codecommit/pipelineTrigger
+      Runtime: go1.x
+      Handler: pipelineTrigger
+      Role: !GetAtt FunctionRole.Arn
+  FunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref Function
+      RetentionInDays: 90
+  FunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt Function.Arn
+      Principal: codecommit.amazonaws.com
+Outputs:
+  CogCondPreAuth:
+    Value: !GetAtt Function.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-Function"
+  CogCondPreAuthAlias:
+    Value: !Ref Function.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionAlias"
+  CogCondPreAuthVersion:
+    Value: !Ref Function.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionVersion"

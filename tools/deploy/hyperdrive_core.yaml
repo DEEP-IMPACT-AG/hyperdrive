@@ -345,11 +345,11 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-CodePipelineBucketArn"
   EventsBucketName:
-    Value: !Ref CodePipelineBucket
+    Value: !Ref EventsBucket
     Export:
       Name: !Sub "${AWS::StackName}-EventsBucketName"
   EventsBucketArn:
-    Value: !GetAtt CodePipelineBucket.Arn
+    Value: !GetAtt EventsBucket.Arn
     Export:
       Name: !Sub "${AWS::StackName}-EventsBucketArn"
   CloudfrontLogsBucketName:
