@@ -49,6 +49,15 @@ Resources:
                   - Fn::Sub:
                       - "${Bucket}/*"
                       - Bucket: !ImportValue HyperdriveCore-CodePipelineBucketArn
+              - Effect: Allow
+                Action:
+                  - "codecommit:BatchGet*"
+                  - "codecommit:Get*"
+                  - "codecommit:Describe*"
+                  - "codecommit:List*"
+                  - "codecommit:GitPull"
+                Resource:
+                  - !GetAtt Repository.Arn
   CheckoutCodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -70,6 +79,61 @@ Resources:
         Fn::Sub:
           - "/aws/codebuild/${ProjectName}"
           - ProjectName: !Ref CheckoutCodeBuildProject
+      RetentionInDays: 90
+  TestCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: codebuild
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${Project}Test"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${Project}Test:*"
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                Resource:
+                  - Fn::Sub:
+                      - "${Bucket}/*"
+                      - Bucket: !ImportValue HyperdriveCore-CodePipelineBucketArn
+  TestCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: "aws/codebuild/ubuntu-base:14.04"
+        Type: LINUX_CONTAINER
+      Name: !Sub "${Project}Test"
+      ServiceRole: !GetAtt TestCodeBuildRole.Arn
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 30
+  TestCodeBuildLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/codebuild/${ProjectName}"
+          - ProjectName: !Ref TestCodeBuildProject
       RetentionInDays: 90
   PipelineRole:
     Type: AWS::IAM::Role
@@ -175,6 +239,18 @@ Resources:
               InputArtifacts:
                 - Name: SourceArtifact
               OutputArtifacts:
+                - Name: CheckoutArtifact
+        - Name: Test
+          Actions:
+            - Name: Test
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref TestCodeBuildProject
+              InputArtifacts:
                 - Name: CheckoutArtifact
   S3EventRole:
     Type: AWS::IAM::Role
