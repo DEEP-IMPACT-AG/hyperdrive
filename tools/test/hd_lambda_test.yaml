@@ -49,6 +49,9 @@ Resources:
       Runtime: go1.x
       Handler: pipelineTrigger
       Role: !GetAtt FunctionRole.Arn
+      Environment:
+        Variables:
+          EVENTS_BUCKET_NAME: !ImportValue HyperdriveCore-EventsBucketName
   FunctionLogs:
     Type: AWS::Logs::LogGroup
     Properties:

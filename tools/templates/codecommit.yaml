@@ -10,7 +10,11 @@ Resources:
       RepositoryName: !Ref Project
       Triggers:
         - CustomData: !Sub |
-            { "project": "${Project}" }
+            {
+              "pipeline": "${Project}",
+              "onTag": true,
+              "onCommit": true
+            }
           DestinationArn: !ImportValue HyperdriveLambdaTest-Function
           Events:
             - updateReference
@@ -223,7 +227,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !ImportValue HyperdriveCore-EventsBucketName
-                S3ObjectKey: !Sub "${Project}/trigger/release.zip"
+                S3ObjectKey: !Sub "${Project}/trigger.zip"
               OutputArtifacts:
                 - Name: SourceArtifact
         - Name: Checkout
@@ -297,7 +301,7 @@ Resources:
                 ],
                 "resources": {
                   "ARN": [
-                    "arn:aws:s3:::${Bucket}/${Project}/trigger/release.zip"
+                    "arn:aws:s3:::${Bucket}/${Pipeline}/trigger.zip"
                   ]
                 }
               }
