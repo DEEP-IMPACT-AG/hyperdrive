@@ -90,7 +90,7 @@ builds:
       - linux
     goarch:
       - amd64
-  - main: service/pipelineTrigger/pipelineTrigger.go
+  - main: codecommit/pipelineTrigger/pipelineTrigger.go
     binary: pipelineTrigger/pipelineTrigger
     goos:
       - linux
