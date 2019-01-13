@@ -731,6 +731,45 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt RotateCfApiKeyFunction.Arn
       Principal: events.amazonaws.com
+  # Code commit function
+  PipelineTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  PipelineTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      AutoPublishAlias: live
+      CodeUri: ../../dist/linux_amd64/pipelineTrigger
+      Runtime: go1.x
+      Handler: pipelineTrigger
+      Role: !GetAtt PipelineTriggerRole.Arn
+      Environment:
+        Variables:
+          EVENTS_BUCKET_NAME: !ImportValue HyperdriveCore-EventsBucketName
+  PipelineTriggerLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub:
+          - "/aws/lambda/${LambdaName}"
+          - LambdaName: !Ref PipelineTriggerFunction
+      RetentionInDays: 90
+  PipelineTriggerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt PipelineTriggerFunction.Arn
+      Principal: codecommit.amazonaws.com
 Outputs:
   CogCondPreAuth:
     Value: !GetAtt CogCondPreAuthFunction.Arn
@@ -900,6 +939,18 @@ Outputs:
     Value: !Ref RotateCfApiKeyFunction.Version
     Export:
       Name: !Sub "${AWS::StackName}-RotateCfApiKeyVersion"
+  PipelineTrigger:
+    Value: !GetAtt PipelineTriggerFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-PipelineTrigger"
+  PipelineTriggerAlias:
+    Value: !Ref PipelineTriggerFunction.Alias
+    Export:
+      Name: !Sub "${AWS::StackName}-PipelineTriggerAlias"
+  PipelineTriggerVersion:
+    Value: !Ref PipelineTriggerFunction.Version
+    Export:
+      Name: !Sub "${AWS::StackName}-PipelineTriggerVersion"
   Version:
     Value: !Ref Version
     Export:

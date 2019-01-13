@@ -90,6 +90,12 @@ builds:
       - linux
     goarch:
       - amd64
+  - main: service/pipelineTrigger/pipelineTrigger.go
+    binary: pipelineTrigger/pipelineTrigger
+    goos:
+      - linux
+    goarch:
+      - amd64
 
 release:
   disable: true

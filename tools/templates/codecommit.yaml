@@ -15,7 +15,7 @@ Resources:
               "onTag": true,
               "onCommit": true
             }
-          DestinationArn: !ImportValue HyperdriveLambdaTest-Function
+          DestinationArn: !ImportValue HyperdriveLambda-PipelineTrigger
           Events:
             - updateReference
             - createReference
