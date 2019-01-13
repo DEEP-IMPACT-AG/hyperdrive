@@ -53,6 +53,46 @@ Resources:
               - Fn::Sub:
                   - "${Arn}/*"
                   - Arn: !GetAtt ArtifactsBucket.Arn
+  CodePipelineBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::Region}.hyperdrive.codepipeline.${BaseDomainName}"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 180
+            Status: Enabled
+  EventsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::Region}.hyperdrive.events.${BaseDomainName}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - NoncurrentVersionExpirationInDays: 180
+            Status: Enabled
+  EventsBucketCloudTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      EnableLogFileValidation: false
+      EventSelectors:
+        - DataResources:
+            - Type: AWS::S3::Object
+              Values:
+                - Fn::Sub:
+                    - "${Bucket}/"
+                    - Bucket: !GetAtt EventsBucket.Arn
+          IncludeManagementEvents: false
+          ReadWriteType: WriteOnly
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      IsMultiRegionTrail: false
+      S3BucketName: !Sub "codepipeline-cloudtrail-placeholder-bucket-${AWS::Region}"
+      S3KeyPrefix: !Ref EventsBucket
   CloudfrontLogsBucket:
     Type: "AWS::S3::Bucket"
     Properties:
@@ -296,6 +336,22 @@ Outputs:
     Value: !Ref CloudFrontOriginIdentity
     Export:
       Name: !Sub "${AWS::StackName}-CloudFrontOriginIdentity"
+  CodePipelineBucketName:
+    Value: !Ref CodePipelineBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-CodePipelineBucketName"
+  CodePipelineBucketArn:
+    Value: !GetAtt CodePipelineBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-CodePipelineBucketArn"
+  EventsBucketName:
+    Value: !Ref CodePipelineBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-EventsBucketName"
+  EventsBucketArn:
+    Value: !GetAtt CodePipelineBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-EventsBucketArn"
   CloudfrontLogsBucketName:
     Value: !Ref CloudfrontLogsBucket
     Export:
