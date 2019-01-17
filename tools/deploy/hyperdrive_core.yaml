@@ -12,6 +12,7 @@ Mappings:
       CloudformationECSLambdaStackRole: HyperdriveCloudformationECSLambdaStack
       CloudformationLambdaStackRole: HyperdriveCloudformationLambdaStack
       CloudformationECSStackRole: HyperdriveCloudformationECSStack
+      ECSInstanceRole: HyperdriveECSInstanceRole
     Policy:
       CloudformationECSPolicy: HyperdriveCloudformationECS
       CloudformationLambdaPolicy: HyperdriveCloudformationLambda
@@ -106,6 +107,31 @@ Resources:
           - ExpirationInDays: 90
             Status: Enabled
   # 2. Cloudformation Policies/Roles
+  ECSInstanceRole:
+    Type: AWS::IAM::Role
+    Condition: IsUsEast1
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      RoleName:
+        Fn::FindInMap: [IamNaming, Role, ECSInstanceRole]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+  ECSInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: IsUsEast1
+    Properties:
+      InstanceProfileName:
+        Fn::FindInMap: [IamNaming, Role, ECSInstanceRole]
+      Roles:
+        - !Ref ECSInstanceRole
   CloudformationECSStackRole:
     Type: AWS::IAM::Role
     Condition: IsUsEast1
@@ -364,6 +390,22 @@ Outputs:
     Value: !GetAtt CloudfrontLogsBucket.DomainName
     Export:
       Name: !Sub "${AWS::StackName}-CloudfrontLogsBucketDomain"
+  ECSInstanceRole:
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:role/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Role, ECSInstanceRole]
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSInstanceRole"
+  ECSInstanceProfile:
+    Value:
+      Fn::Sub:
+        - "arn:aws:iam::${AWS::AccountId}:instance-profile/${Name}"
+        - Name:
+            Fn::FindInMap: [IamNaming, Role, ECSInstanceRole]
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSInstanceProfile"
   CloudformationECSStackRole:
     Value:
       Fn::Sub:
