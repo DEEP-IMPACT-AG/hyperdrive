@@ -33,7 +33,7 @@ const CheckoutSh = `#!/bin/bash
 git config --global credential.helper '!aws codecommit credential-helper $@'
 git config --global credential.UseHttpPath true
 
-git clone --shallow-submodules https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/testcodecommit repo
+git clone --shallow-submodules https://git-codecommit.%s.amazonaws.com/v1/repos/%s repo
 cd repo
 %s
 cd
@@ -69,19 +69,26 @@ func processEvent(s3 *awss3.S3) func(event events.CodeCommitEvent) (events.CodeC
 		if err != nil {
 			return event, err
 		}
+		awsRegion := commit.AWSRegion
+		repository := extractRepository(commit)
 		ref := commit.CodeCommit.References[0]
 		if isCommit(ref) && settings.OnCommit {
-			if err := triggerPipeline(s3, settings.Pipeline, "git checkout "+ref.Commit); err != nil {
+			if err := triggerPipeline(s3, awsRegion, repository, settings.Pipeline, "git checkout "+ref.Commit); err != nil {
 				return event, err
 			}
 		}
 		if isTag(ref) && settings.OnTag {
-			if err := triggerPipeline(s3, settings.Pipeline, "git checkout "+tag(ref)); err != nil {
+			if err := triggerPipeline(s3, awsRegion, repository, settings.Pipeline, "git checkout "+tag(ref)); err != nil {
 				return event, err
 			}
 		}
 		return event, nil
 	}
+}
+
+func extractRepository(commit events.CodeCommitRecord) string {
+	idx := strings.LastIndex(commit.EventSourceARN, ":")
+	return commit.EventSourceARN[idx+1:]
 }
 
 func isTag(ref events.CodeCommitReference) bool {
@@ -96,14 +103,14 @@ func isCommit(ref events.CodeCommitReference) bool {
 	return strings.HasPrefix(ref.Ref, "refs/heads/")
 }
 
-func triggerPipeline(s3 *awss3.S3, pipeline string, gitCheckoutCommand string) error {
+func triggerPipeline(s3 *awss3.S3, awsRegion, repository, pipeline, gitCheckoutCommand string) error {
 	buf := new(bytes.Buffer)
 	writer := zip.NewWriter(buf)
 	var files = []struct {
 		Name, Body string
 	}{
 		{"buildspec.yaml", Buildspec},
-		{"checkout.sh", fmt.Sprintf(CheckoutSh, gitCheckoutCommand)},
+		{"checkout.sh", fmt.Sprintf(CheckoutSh, awsRegion, repository, gitCheckoutCommand)},
 	}
 	for _, file := range files {
 		zipFile, err := writer.Create(file.Name)
