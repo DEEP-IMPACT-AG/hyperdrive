@@ -60,6 +60,12 @@ builds:
       - linux
     goarch:
       - amd64
+  - main: cf/listenerRuleSwapper/listenerRuleSwapper.go
+    binary: listenerRuleSwapper/listenerRuleSwapper
+    goos:
+      - linux
+    goarch:
+      - amd64
   - main: cf/loggrp/loggrp.go
     binary: loggrp/loggrp
     goos:
