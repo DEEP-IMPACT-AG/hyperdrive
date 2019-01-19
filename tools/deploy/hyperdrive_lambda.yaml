@@ -745,6 +745,20 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: s3
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                Resource:
+                  - Fn::Sub:
+                      - "${Bucket}/*"
+                      - Bucket: !ImportValue HyperdriveCore-EventsBucketArn
   PipelineTriggerFunction:
     Type: AWS::Serverless::Function
     Properties:
