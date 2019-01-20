@@ -105,7 +105,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
         - "arn:aws:iam::aws:policy/AWSCodeCommitReadOnly"
         - !Ref CodeBuildPolicy
   DockerCodeBuildProject:
@@ -331,22 +331,6 @@ Resources:
             {
               "Version": "2008-10-17",
               "Statement": [
-                {
-                  "Sid": "artifact",
-                  "Effect": "Allow",
-                  "Principal": {
-                    "AWS": "${DockerBuildRoleArn}"
-                  },
-                  "Action": [
-                    "ecr:BatchCheckLayerAvailability",
-                    "ecr:BatchGetImage",
-                    "ecr:CompleteLayerUpload",
-                    "ecr:GetDownloadUrlForLayer",
-                    "ecr:InitiateLayerUpload",
-                    "ecr:PutImage",
-                    "ecr:UploadLayerPart"
-                  ]
-                },
                 {
                   "Sid": "codebuildusage",
                   "Effect": "Allow",
